@@ -64,12 +64,24 @@ class RegexMatcher:
         self.name_reg = re.compile(r_baby, flags=re.UNICODE)
         "---- End Regular Expression for Baby Name Detect ---"
 
+        r_ngaydacbiet_age = ur'((đ|Đ)ầy_(T|t)háng|(b|B)irthday|(t|T)hôi_(N|n)ôi|(s|S)inh_(N|n)hật)'
+        r_tuoi = ur"(r_prefixtuoi(_|\s)\d{1,2}((_|\s)(T|t)háng)?(_|\s)(T|t)uổi)"
+        r_age = ur"r_ngaydacbiet_age|r_tuoi"
+
+        r_age = re.sub(u"r_ngaydacbiet_age", r_ngaydacbiet_age, r_age)
+        r_age = re.sub(u"r_tuoi", r_tuoi, r_age)
+        r_age = re.sub(u"r_prefixtuoi", r_prefixtuoi, r_age)
+
+        self.age_reg = re.compile(r_age, flags=re.UNICODE)
+        "---- End Regular Expression for Baby Age Detect ---"
+
     def calc(self,word_ids):
         sentence = ' '.join(word_ids)
         sentence = ' '.join([word[0] + word[1:].lower() for word in sentence.split(' ')]) + ' '
 
         matches = re.finditer(self.name_reg, sentence)
         res = ['0' if char != ' ' else ' ' for char in sentence]
+        matches_age = re.finditer(self.age_reg, sentence)
 
         if self.debug:
             print '-----------------------------------------'
@@ -84,6 +96,18 @@ class RegexMatcher:
 
             (s_id, e_id) = (match.start(), match.end())
             res[s_id:e_id] = ['1' if res[c_id] != ' ' else ' ' for c_id in xrange(s_id, e_id)]
+
+        for matchNum, match in enumerate(matches_age):
+            matchNum = matchNum + 1
+
+            if self.debug:
+                print ("Age: Match {matchNum} was found at {start}-{end}: {match}".format(matchNum=matchNum, start=match.start(),
+                                                                               end=match.end(),
+                                                                               match=match.group().encode('utf-8')))
+
+            (s_id, e_id) = (match.start(), match.end())
+            res[s_id:e_id] = [('2' if res[c_id] == '0' else '1') if res[c_id] != ' '  else ' ' for c_id in
+                              xrange(s_id, e_id)]
 
         str_res = (''.join(res)).strip()
 
