@@ -64,7 +64,7 @@ class RegexMatcher:
         self.name_reg = re.compile(r_baby, flags=re.UNICODE)
         "---- End Regular Expression for Baby Name Detect ---"
 
-        r_ngaydacbiet_age = ur'((đ|Đ)ầy_(T|t)háng|(b|B)irthday|(t|T)hôi_(N|n)ôi|(s|S)inh_(N|n)hật)'
+        r_ngaydacbiet_age = ur'((đ|Đ)ầy_(T|t)háng|(b|B)irthday|(t|T)hôi_(N|n)ôi|(s|S)inh_(N|n)hật|(S|s)nzz|(S|s)nvv)'
         r_tuoi = ur"(r_prefixtuoi(_|\s)\d{1,2}((_|\s)(T|t)háng)?(_|\s)(T|t)uổi)"
         r_age = ur"r_ngaydacbiet_age|r_tuoi"
 
