@@ -15,7 +15,7 @@ flags.DEFINE_float('drop_prob',.5,'probability for keeping unit')
 
 FLAGS = tf.app.flags.FLAGS
 pipeline = ['data_extractor','cap_extractor','reg_extractor','sum_extractor']
-#pipeline = ['data_extractor']
+
 # build config for pipeline
 def build_config():
     config = {}
