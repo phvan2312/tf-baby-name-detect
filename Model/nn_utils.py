@@ -1,19 +1,17 @@
 import tensorflow as tf
 import numpy as np
 
-def initialize_embedding(shape,name='embedding'):
-
+def initialize_matrix(shape, mode='xavier', name='embedding'):
     if len(shape) == 1:
-        value = np.zeros(shape)
+        initializer = tf.zeros_initializer # for bias
+    elif mode == 'xavier':
+        initializer = tf.contrib.layers.xavier_initializer
     else:
-        drange = np.sqrt(6. / (np.sum(shape)))
-        value = drange * np.random.uniform(low=-1.0, high=1.0, size=shape)
+        initializer = tf.truncated_normal_initializer
 
-    emb = tf.Variable(initial_value=value,dtype=tf.float32,name=name)
+    emb = tf.get_variable(name=name,shape=shape,dtype=tf.float32,initializer=initializer())
+
     return emb
-
-def build_fully_connected(in_dim,out_dim,input,activation='tanh'):
-    raise NotImplemented()
 
 def build_biRNN(input,hid_dim,sequence_length,cells=None,mode='normal'):
     s = input.get_shape().as_list()
@@ -33,8 +31,22 @@ def build_biRNN(input,hid_dim,sequence_length,cells=None,mode='normal'):
                                                     dtype=tf.float32)
 
     if mode == 'character':
-        final_output = tf.reshape(tf.concat(state,axis=1),shape=[s[0],s[1],2*hid_dim])
+        final_output = tf.reshape(tf.concat(state[:][1],axis=1),shape=[s[0],s[1],2*hid_dim])
     else:
-        final_output = tf.concat(output, 2)
+        final_output = tf.concat(output, axis=2)
 
     return final_output
+
+# params sentence_lengths contain integer value which is actual
+# length of each post in batch.
+def crf_decode_with_batch(scores,sentence_lengths,transition):
+    predict_labels = []
+    predict_scores = []
+
+    for score, sentence_length in zip(scores,sentence_lengths):
+        norm_score = score[:sentence_length]
+        predict_label, predict_score = tf.contrib.crf.viterbi_decode(norm_score, transition)
+        predict_labels.append(predict_label)
+        predict_scores.append(predict_score)
+
+    return predict_labels, predict_scores
