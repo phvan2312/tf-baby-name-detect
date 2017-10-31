@@ -13,9 +13,10 @@ class Entity_component(Component):
 
     def __init__(self):
         Component.__init__(self)
-        self.eval_temp = 'eval' #os.path.join(eval_path, "conlleval")
-        self.eval_script = 'conlleval'
-        pass
+        eval_path = os.path.dirname(os.path.realpath(__file__))
+
+        self.eval_dir   = os.path.join(eval_path,'Evaluation')
+        self.eval_script = os.path.join(eval_path,'conlleval')
 
     # Load component from file
     def load(self, model_dir):
@@ -51,7 +52,7 @@ class Entity_component(Component):
             'lr' : .001,
             'optimize_method' : 'adam',
             'clip' : 5,
-            'dir_summary' : 'summary'
+            'dir_summary' : 'Summary'
         }
         # build model
         self.model = NERModel(**parameters)
@@ -65,12 +66,9 @@ class Entity_component(Component):
 
         # run
         print 'start training'
-        nepochs = config['epochs']
-        freq_eval = config['freq_eval']
-        id2label = dict['id2label']
-        label2id = dict['label2id']
-        train_i = 0
-        eval_i  = 0
+        nepochs, freq_eval = config['epochs'], config['freq_eval']
+        id2label,label2id = dict['id2label'], dict['label2id']
+        train_i,eval_i = 0,0
         n_labels = len(id2label)
 
         for epoch in range(nepochs):
@@ -106,37 +104,38 @@ class Entity_component(Component):
                                 count[label2id[r_pred], label2id[y_pred]] += 1
                             predictions.append("")
 
-                    eval_id = np.random.randint(1000000, 2000000)
-                    output_path = os.path.join(self.eval_temp, "eval.%i.output" % eval_id)
-                    scores_path = os.path.join(self.eval_temp, "eval.%i.scores" % eval_id)
-
-                    with codecs.open(output_path, 'w', 'utf8') as f:
-                        f.write("\n".join(predictions))
-                    os.system("%s < %s > %s" % (self.eval_script, output_path, scores_path))
-
-                    # CoNLL evaluation results
-                    eval_lines = [l.rstrip() for l in codecs.open(scores_path, 'r', 'utf8')]
-                    for line in eval_lines:
-                        print line
-
-                    # Confusion matrix with accuracy for each tag
-                    print ("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
-                        "ID", "NE", "Total",
-                        *([dict['id2label'][i] for i in xrange(n_labels)] + ["Percent"])
-                    )
-                    for i in xrange(n_labels):
-                        print ("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
-                            str(i), dict['id2label'][i], str(count[i].sum()),
-                            *([count[i][j] for j in xrange(n_labels)] +
-                              ["%.3f" % (count[i][i] * 100. / max(1, count[i].sum()))])
-                        )
-
-                    # Global accuracy
-                    print "%i/%i (%.5f%%)" % (
-                        count.trace(), count.sum(), 100. * count.trace() / max(1, count.sum())
-                    )
+                    #display result
+                    self.display_eval_testset(predictions=predictions,conf_matrix=count,n_labels=n_labels)
 
         self.model.close_writer()
 
-    def __train(self):
-        pass
+    def display_eval_testset(self,predictions,conf_matrix,n_labels):
+        eval_id = np.random.randint(1000000, 2000000)
+        output_path = os.path.join(self.eval_dir, "eval.%i.output" % eval_id)
+        scores_path = os.path.join(self.eval_dir, "eval.%i.scores" % eval_id)
+
+        with codecs.open(output_path, 'w', 'utf8') as f:
+            f.write("\n".join(predictions))
+        os.system("%s < %s > %s" % (self.eval_script, output_path, scores_path))
+
+        # CoNLL evaluation results
+        eval_lines = [l.rstrip() for l in codecs.open(scores_path, 'r', 'utf8')]
+        for line in eval_lines:
+            print line
+
+        # Confusion matrix with accuracy for each tag
+        print ("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
+            "ID", "NE", "Total",
+            *([dict['id2label'][i] for i in xrange(n_labels)] + ["Percent"])
+        )
+        for i in xrange(n_labels):
+            print ("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
+                str(i), dict['id2label'][i], str(conf_matrix[i].sum()),
+                *([conf_matrix[i][j] for j in xrange(n_labels)] +
+                  ["%.3f" % (conf_matrix[i][i] * 100. / max(1, conf_matrix[i].sum()))])
+            )
+
+        # Global accuracy
+        print "%i/%i (%.5f%%)" % (
+            conf_matrix.trace(), conf_matrix.sum(), 100. * conf_matrix.trace() / max(1, conf_matrix.sum())
+        )

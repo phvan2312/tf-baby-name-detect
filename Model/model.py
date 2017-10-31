@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from nn_utils import initialize_matrix, build_biRNN, crf_decode_with_batch, pad_common, pad_char
-
+from custom_cell import Attention_GRUCell # not test yet
 
 class NERModel:
     def __init__(self, id2char, id2word, id2label, id2pos, id2cap, id2reg,
