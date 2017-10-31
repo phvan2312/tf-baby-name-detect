@@ -34,7 +34,7 @@ class NERModel:
         self.dir_summary = dir_summary
         if tf.gfile.Exists(self.dir_summary):
             tf.gfile.DeleteRecursively(self.dir_summary)
-        tf.gfile.MakeDirs(self.dir_summaryr)
+        tf.gfile.MakeDirs(self.dir_summary)
 
     def __build_placeholder(self):
         self.char_ids = tf.placeholder(dtype=tf.int32, shape=[None, None, None],
@@ -106,15 +106,22 @@ class NERModel:
 
     def __build_sequence_tagging(self):
         with tf.variable_scope('model_loss'):
+            #
+            # Calculate loss for mode training
+            #
             log_likelihood, self.transition = tf.contrib.crf.crf_log_likelihood(
                 inputs=self.fn_scores, tag_indices=self.labels, sequence_lengths=self.sentence_length
             )
 
             self.train_loss = tf.reduce_mean(-log_likelihood)
-            self.eval_loss = tf.reduce_mean(
-                tf.contrib.crf.crf_log_likelihood(transition_params=self.transition, inputs=self.fn_scores,
+
+            #
+            # Calculate loss for mode evaluating (just for summarizer)
+            #
+            eval_log_likelihood, _ = tf.contrib.crf.crf_log_likelihood(transition_params=self.transition, inputs=self.fn_scores,
                                                   tag_indices=self.labels, sequence_lengths=self.sentence_length)
-            )
+
+            self.eval_loss = tf.reduce_mean(-eval_log_likelihood)
 
     def __build_optimizer(self):
         with tf.variable_scope('optimizer'):
@@ -238,22 +245,36 @@ class NERModel:
                 pad_common(sequences=[e['pos_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0],
             self.sentence_length: sentence_length,
             self.word_length: word_length,
-            self.dropout_prob: dropout_keep_prob
+            self.dropout: dropout_keep_prob
         }
 
         if use_label:
             res[self.labels] = \
-                pad_common(sequences=[e['label_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0],
+                pad_common(sequences=[e['label_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0]
 
         if self.id2reg != None:
             res[self.reg_ids] = \
                 pad_common(sequences=[e['reg_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0]
+        '''
+        self.char_ids = tf.placeholder(dtype=tf.int32, shape=[None, None, None],
+                                       name='char_ids')  # batch x max_len_sent x max_len_word
+        self.word_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='word_ids')  # batch x max_len_sent
+        self.cap_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='cap_ids')  # batch x max_len_sent
+        self.pos_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='pos_ids')  # batch x max_len_sent
+        self.reg_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='reg_ids')  # batch x mat_len_sent
 
+        self.sentence_length = tf.placeholder(dtype=tf.int32, shape=[None], name='sentence_length')  # bacth
+        self.word_length = tf.placeholder(dtype=tf.int32, shape=[None, None],
+                                          name='word_length')  # batch x max_len_sent
+
+        self.labels = tf.placeholder(dtype=tf.int32, shape=[None, None], name='labels')
+        self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
+        '''
         return res
 
     def batch_run(self, batch, i, mode='train'):
         ip_feed_dict = self.__create_feed_dict(batch, dropout_keep_prob=self.dropout_prob)
-        sentece_lengths = ip_feed_dict['sentence_length']
+        sentece_lengths = ip_feed_dict[self.sentence_length]
 
         if mode == 'train':
             _, loss, summary = self.sess.run([self.train_op, self.train_loss, self.merged],

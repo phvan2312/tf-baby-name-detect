@@ -11,14 +11,6 @@ class Entity_component(Component):
                 'dictionary.id2reg','dataset.train','dataset.test']
     provides = ['trained_model']
 
-    '''
-    def __init__(self, id2char, id2word, id2label, id2pos, id2cap, id2reg,
-                 char_emb_dim, word_emb_dim, cap_emb_dim, pos_emb_dim, reg_emb_dim,
-                 char_hid_dim, word_hid_dim,
-                 nn_for_char, dropout_prob, lr, optimize_method, clip,
-                 dir_summary):
-    '''
-
     def __init__(self):
         Component.__init__(self)
         self.eval_temp = 'eval' #os.path.join(eval_path, "conlleval")
@@ -75,9 +67,11 @@ class Entity_component(Component):
         print 'start training'
         nepochs = config['epochs']
         freq_eval = config['freq_eval']
+        id2label = dict['id2label']
+        label2id = dict['label2id']
         train_i = 0
         eval_i  = 0
-        n_labels = len(dict['id2label'])
+        n_labels = len(id2label)
 
         for epoch in range(nepochs):
             print 'epoch %i starting ...' % epoch
@@ -93,21 +87,24 @@ class Entity_component(Component):
                     predictions = []
                     count = np.zeros((n_labels,n_labels), dtype=np.int32)
 
-                    for t_i, t_data in enumerate(range(len(test_dataset))):
-                        y_preds = self.model.batch_run(batch=[t_data],i=eval_i,mode='eval')
-                        r_preds = t_data['label_ids']
+                    for t_i, t_batch_id in enumerate(range(len(test_batch))):
+                        t_batch = test_batch[t_batch_id]
 
-                        assert len(y_preds) == len(r_preds)
+                        batch_y_preds = self.model.batch_run(batch=t_batch, i=eval_i, mode='eval')
+                        batch_r_preds = [elem['label_ids'] for elem in t_batch]
+
+                        assert len(batch_y_preds) == len(batch_r_preds)
                         eval_i += 1
 
-                        y_preds = [dict['id2label'][i] for i in y_preds]
-                        r_preds = [dict['id2label'][i] for i in r_preds]
+                        batch_y_preds = [[id2label[i] for i in sample] for sample in batch_y_preds]
+                        batch_r_preds = [[id2label[i] for i in sample] for sample in batch_r_preds]
 
-                        for i, (y_pred, r_pred) in enumerate(zip(y_preds, r_preds)):
-                            new_line = ",".join([t_data['token'][i], r_preds[i], y_preds[i]])
-                            predictions.append(new_line)
-                            count[r_pred, y_pred] += 1
-                        predictions.append("")
+                        for (data,y_preds, r_preds) in zip(t_batch,batch_y_preds,batch_r_preds):
+                            for i, (y_pred, r_pred) in enumerate(zip(y_preds, r_preds)):
+                                new_line = ",".join([data['token'][i], r_preds[i], y_preds[i]])
+                                predictions.append(new_line)
+                                count[label2id[r_pred], label2id[y_pred]] += 1
+                            predictions.append("")
 
                     eval_id = np.random.randint(1000000, 2000000)
                     output_path = os.path.join(self.eval_temp, "eval.%i.output" % eval_id)

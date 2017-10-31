@@ -70,6 +70,7 @@ class Data_component(Component):
             'id2char': id2char,
             'id2label': id2label,
             'id2pos': id2pos,
+            'label2id' : label2id,
         }
 
         ids = {

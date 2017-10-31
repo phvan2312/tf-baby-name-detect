@@ -62,13 +62,5 @@ def main(_):
 
     print message
 
-    '''
-    def __init__(self, id2char, id2word, id2label, id2pos, id2cap, id2reg,
-                 char_emb_dim, word_emb_dim, cap_emb_dim, pos_emb_dim, reg_emb_dim,
-                 char_hid_dim, word_hid_dim,
-                 nn_for_char, dropout_prob, lr, optimize_method, clip,
-                 dir_summary):
-    '''
-
 if __name__ == '__main__':
     tf.app.run()
