@@ -85,25 +85,15 @@ def common_mapping(lst_x,name='x'):
 
     return dict_x,id2x,x2id
 
-"""
-Pad the characters of the words in a sentence.
-Input:
-    - list of lists of ints (list of words, a word being a list of char indexes)
-Output:
-    - padded list of lists of ints
-    - padded list of lists of ints (where chars are reversed)
-    - list of ints corresponding to the index of the last character of each word
-"""
-def pad_word_chars(words,max_word_len = -1):
-    if max_word_len > 0:
-        max_length = max_word_len
-    else:
-        max_length = max([len(word) for word in words])
 
-    char_for = []
-    for word in words:
-        padding = [0] * (max_length - len(word))
-        char_for.append(word + padding)
-    return char_for
+def create_batch(dataset,batch_size):
+    batch_datas = []
 
+    pre_batchs  = range(0,len(dataset),batch_size)
+    next_batchs = [(i + batch_size) if (i + batch_size) < len(dataset) else len(dataset) for i in pre_batchs ]
 
+    for s_i, e_i in zip(pre_batchs,next_batchs):
+        if e_i > s_i:
+            batch_datas.append(dataset[s_i:e_i])
+
+    return batch_datas

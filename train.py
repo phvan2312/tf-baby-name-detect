@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os
 from Utils.registry import Registry
+from Model.model import NERModel
 
 flags = tf.app.flags
 
@@ -11,10 +12,10 @@ flags.DEFINE_float('test_size',.2,'% of test size')
 flags.DEFINE_integer('epochs',12,'number of epochs')
 flags.DEFINE_integer('freq_eval',500,'number of samples passed to evaluate test set')
 flags.DEFINE_boolean('use_regex',True,'use regular expression or not')
-flags.DEFINE_float('drop_prob',.5,'probability for keeping unit')
+flags.DEFINE_integer('batch_size',32,'number of samples per batch')
 
 FLAGS = tf.app.flags.FLAGS
-pipeline = ['data_extractor','cap_extractor','reg_extractor','sum_extractor']
+pipeline = ['data_extractor','cap_extractor','reg_extractor','sum_extractor','entity_extractor']
 
 # build config for pipeline
 def build_config():
@@ -41,11 +42,11 @@ def build_config():
     config['freq_eval'] = FLAGS.freq_eval
     print ('-- Number of samples passed to evaluate test data: ', config['freq_eval'])
 
-    config['drop_prob'] = FLAGS.drop_prob
-    print ('-- Probability for keeping unit: ', config['drop_prob'])
-
     config['use_regex'] = FLAGS.use_regex
     print ('-- Using regular expression as an addtional feature: ', config['use_regex'])
+
+    config['batch_size'] = FLAGS.batch_size
+    print ('-- Number of samples per batch: ', config['batch_size'])
 
     return config
 
@@ -60,6 +61,14 @@ def main(_):
         component.process(message=message,config=config)
 
     print message
+
+    '''
+    def __init__(self, id2char, id2word, id2label, id2pos, id2cap, id2reg,
+                 char_emb_dim, word_emb_dim, cap_emb_dim, pos_emb_dim, reg_emb_dim,
+                 char_hid_dim, word_hid_dim,
+                 nn_for_char, dropout_prob, lr, optimize_method, clip,
+                 dir_summary):
+    '''
 
 if __name__ == '__main__':
     tf.app.run()

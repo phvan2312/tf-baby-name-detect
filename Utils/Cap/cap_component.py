@@ -2,8 +2,8 @@ from Utils.component import Component
 
 class Cap_component(Component):
     name = 'cap_extractor'
-    provides = ['cap']
-    requires = ['token']
+    provides = ['ids.cap_ids','dictionary.id2cap']
+    requires = ['data.sentence']
 
     def __init__(self):
         Component.__init__(self)
@@ -23,14 +23,15 @@ class Cap_component(Component):
     def process(self, message, config):
         Component.process(self,message,config)
 
-        tokens = message.get('token')
+        tokens = message.get('data').get('sentence')
         caps = []
 
         for _tokens in tokens:
             _caps = [self.__cap_feature(_token) for _token in _tokens]
             caps.append(_caps)
 
-        message['cap']=caps
+        message['ids']['cap_ids']= caps
+        message['dictionary']['id2cap'] = {i:str(i) for i in range(4)}
 
     def __cap_feature(self,s):
         """

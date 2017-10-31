@@ -3,10 +3,11 @@ from Cap.cap_component import Cap_component
 from Regex.reg_component import Reg_component
 from Data.data_component import Data_component
 from Summarizer.sum_component import Sum_component
+from Entity.entity_component import Entity_component
 import collections
 
 class Registry:
-    component_classes = [Cap_component,Reg_component,Data_component,Sum_component]
+    component_classes = [Cap_component,Reg_component,Data_component,Sum_component,Entity_component]
     registered_components = {c.name:c for c in component_classes}
 
     def __init__(self):

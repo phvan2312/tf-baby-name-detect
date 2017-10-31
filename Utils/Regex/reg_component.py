@@ -1,10 +1,11 @@
 from Utils.component import Component
 from regmatcher import RegexMatcher
+from Utils.utils import common_mapping
 
 class Reg_component(Component):
     name = 'reg_extractor'
-    provides = ['reg']
-    requires = ['token']
+    provides = ['ids.reg_ids','dictionary.id2reg']
+    requires = ['data.sentence']
 
     def __init__(self):
         Component.__init__(self)
@@ -25,12 +26,15 @@ class Reg_component(Component):
     def process(self, message, config):
         Component.process(self,message,config)
 
-        tokens = message.get('token')
+        tokens = message.get('data').get('sentence')
         regs = []
 
         for _tokens in tokens:
             _regs = self.regex_matcher.annotate_name(_tokens)
             regs.append(_regs)
 
-        message['reg']=regs
+        _,id2reg,_ = common_mapping(regs,'regex')
+
+        message['ids']['reg_ids']=regs
+        message['dictionary']['id2reg'] = id2reg
 

@@ -66,19 +66,23 @@ class Data_component(Component):
 
         # for save to message
         dictionary = {
-            'word': {'id2word': id2word, 'word2id': word2id},
-            'char': {'id2char': id2char, 'char2id': char2id},
-            'label': {'id2label': id2label, 'label2id': label2id},
-            'pos' :  {'id2pos': id2pos, 'pos2id': pos2id},
+            'id2word': id2word,
+            'id2char': id2char,
+            'id2label': id2label,
+            'id2pos': id2pos,
         }
 
-        message['raw_data'] = raw_data
+        ids = {
+            'word_ids' : word_ids,
+            'char_ids' : char_ids,
+            'label_ids': label_ids,
+            'pos_ids'  : pos_ids
+        }
+
+        message['data'] = raw_data
         message['dictionary'] = dictionary
-        message['word_ids'] = word_ids
-        message['char_ids'] = char_ids
-        message['label_ids'] = label_ids
-        message['pos_ids'] = pos_ids
-        message['token'] = raw_data['sentence']
+        message['ids'] = ids
+
 
     # normalize token, convert from its variants to unique one
     def normalize_text(self,token):

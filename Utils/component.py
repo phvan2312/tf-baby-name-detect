@@ -10,6 +10,7 @@ class Component:
     requires = []
 
     def __init__(self):
+        self.split_token = '.'
         pass
 
     # Load component from file
@@ -29,7 +30,16 @@ class Component:
         assert type(config) is dict
 
         for require in self.requires:
-            assert require in message
+            if self.split_token in require:
+                reqs = require.split(self.split_token)
+            else:
+                reqs = [require]
+            self.__validate(reqs,message)
+
+    def __validate(self,reqs,data):
+        for req in reqs:
+            assert req in data
+            data = data.get(req)
 
 
 if __name__ == '__main__':
