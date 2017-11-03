@@ -1,18 +1,16 @@
 import tensorflow as tf
-import numpy as np
 import os
 from Utils.registry import Registry
-from Model.model import NERModel
 
 flags = tf.app.flags
 
 flags.DEFINE_string('word2vec_path','./Data/Word2vec/43k_word2vec.bin','path for storing word representation (.bin only)')
 flags.DEFINE_string('data_path','./Data/Train/train.csv','path for storing data')
 flags.DEFINE_float('test_size',.2,'% of test size')
-flags.DEFINE_integer('epochs',12,'number of epochs')
-flags.DEFINE_integer('freq_eval',500,'number of samples passed to evaluate test set')
+flags.DEFINE_integer('epochs',50,'number of epochs')
+flags.DEFINE_integer('freq_eval',10,'number of batchs passed to evaluate test set')
 flags.DEFINE_boolean('use_regex',True,'use regular expression or not')
-flags.DEFINE_integer('batch_size',32,'number of samples per batch')
+flags.DEFINE_integer('batch_size',20,'number of samples per batch')
 
 FLAGS = tf.app.flags.FLAGS
 pipeline = ['data_extractor','cap_extractor','reg_extractor','sum_extractor','entity_extractor']
@@ -40,7 +38,7 @@ def build_config():
     print ('-- Number of epochs: ', config['epochs'])
 
     config['freq_eval'] = FLAGS.freq_eval
-    print ('-- Number of samples passed to evaluate test data: ', config['freq_eval'])
+    print ('-- Number of batchs passed to evaluate test data: ', config['freq_eval'])
 
     config['use_regex'] = FLAGS.use_regex
     print ('-- Using regular expression as an addtional feature: ', config['use_regex'])
@@ -60,7 +58,7 @@ def main(_):
     for name,component in components.iteritems():
         component.process(message=message,config=config)
 
-    print message
+    #print message
 
 if __name__ == '__main__':
     tf.app.run()

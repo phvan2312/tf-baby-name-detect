@@ -40,7 +40,7 @@ class Entity_component(Component):
             'id2pos'  : dict['id2pos'],
             'id2cap'  : dict['id2cap'],
             'id2reg'  : dict['id2reg'],
-            'char_emb_dim' : 20,
+            'char_emb_dim' : 20, # 25 for bi-lstm is ok
             'word_emb_dim' : 100,
             'cap_emb_dim'  : 10,
             'pos_emb_dim'  : 10,
@@ -51,8 +51,9 @@ class Entity_component(Component):
             'dropout_prob' : .5,
             'lr' : .001,
             'optimize_method' : 'adam',
-            'clip' : 5,
-            'dir_summary' : 'Summary'
+            'clip' : 1,
+            'dir_summary' : 'Summary',
+            'pre_emb_path': config['word2vec_path'],
         }
         # build model
         self.model = NERModel(**parameters)
@@ -70,6 +71,7 @@ class Entity_component(Component):
         id2label,label2id = dict['id2label'], dict['label2id']
         train_i,eval_i = 0,0
         n_labels = len(id2label)
+        best_test = -np.inf
 
         for epoch in range(nepochs):
             print 'epoch %i starting ...' % epoch
@@ -99,17 +101,20 @@ class Entity_component(Component):
 
                         for (data,y_preds, r_preds) in zip(t_batch,batch_y_preds,batch_r_preds):
                             for i, (y_pred, r_pred) in enumerate(zip(y_preds, r_preds)):
-                                new_line = ",".join([data['token'][i], r_preds[i], y_preds[i]])
+                                new_line = " ".join([data['token'][i], r_preds[i], y_preds[i]])
                                 predictions.append(new_line)
                                 count[label2id[r_pred], label2id[y_pred]] += 1
                             predictions.append("")
 
-                    #display result
-                    self.display_eval_testset(predictions=predictions,conf_matrix=count,n_labels=n_labels)
+                    # display result
+                    test_score = self.display_eval_testset(predictions=predictions,conf_matrix=count,n_labels=n_labels,id2label=id2label)
+                    if test_score > best_test:
+                        best_test = test_score
+                        print ('-- New best score on test, ',str(best_test))
 
         self.model.close_writer()
 
-    def display_eval_testset(self,predictions,conf_matrix,n_labels):
+    def display_eval_testset(self,predictions,conf_matrix,n_labels,id2label):
         eval_id = np.random.randint(1000000, 2000000)
         output_path = os.path.join(self.eval_dir, "eval.%i.output" % eval_id)
         scores_path = os.path.join(self.eval_dir, "eval.%i.scores" % eval_id)
@@ -126,11 +131,11 @@ class Entity_component(Component):
         # Confusion matrix with accuracy for each tag
         print ("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
             "ID", "NE", "Total",
-            *([dict['id2label'][i] for i in xrange(n_labels)] + ["Percent"])
+            *([id2label[i] for i in xrange(n_labels)] + ["Percent"])
         )
         for i in xrange(n_labels):
             print ("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
-                str(i), dict['id2label'][i], str(conf_matrix[i].sum()),
+                str(i), id2label[i], str(conf_matrix[i].sum()),
                 *([conf_matrix[i][j] for j in xrange(n_labels)] +
                   ["%.3f" % (conf_matrix[i][i] * 100. / max(1, conf_matrix[i].sum()))])
             )
@@ -139,3 +144,5 @@ class Entity_component(Component):
         print "%i/%i (%.5f%%)" % (
             conf_matrix.trace(), conf_matrix.sum(), 100. * conf_matrix.trace() / max(1, conf_matrix.sum())
         )
+
+        return float(eval_lines[1].strip().split()[-1])

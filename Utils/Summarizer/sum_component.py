@@ -1,7 +1,6 @@
 from Utils.component import Component
 import os
 
-
 class Sum_component(Component):
     name = 'sum_extractor'
     provides = ['dataset']

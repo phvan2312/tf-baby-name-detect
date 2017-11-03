@@ -23,6 +23,9 @@ class Data_component(Component):
         Component.load(self,model_dir)
         pass
 
+    def lower_all(self,lst):
+        return [[e.lower() for e in l] for l in lst]
+
     # Process message
     def process(self, message, config):
 
@@ -45,8 +48,8 @@ class Data_component(Component):
         # We just be allowed to get information from training data only
         train_data = {name:val[:split_id] for name,val in raw_data.iteritems()}
 
-        _, id2word, word2id    = word_mapping(lst_sentence=train_data['sentence'],pre_emb=word2vec_path)
-        _, id2char, char2id    = char_mapping(lst_sentence=train_data['sentence'])
+        _, id2word, word2id    = word_mapping(lst_sentence=self.lower_all(train_data['sentence']),pre_emb=word2vec_path)
+        _, id2char, char2id    = char_mapping(lst_sentence=self.lower_all(train_data['sentence']))
         _, id2label, label2id  = common_mapping(lst_x=train_data['label'],name='label')
         _, id2pos, pos2id      = common_mapping(lst_x=train_data['pos'],name='pos')
 

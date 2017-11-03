@@ -1,0 +1,3 @@
+Without Batch Normalization
+Use 2 dropout, the first is applied before go to the Bi-LSTM and the secofter
+Parameter dropout_keep_prob = 0.5
