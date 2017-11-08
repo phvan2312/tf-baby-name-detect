@@ -13,7 +13,7 @@ class RegexMatcher:
 
     def load_negative_name(self):
         neg_names = []
-        for line in open('./Utils/Regex/negative_name.csv', 'r'):
+        for line in open('./negative_name.csv', 'r'):
             neg_names.append(line.decode('utf-8').strip())
 
         r_neg_name = ur'(\d+|' + '|'.join(neg_names) + ur')'
@@ -42,7 +42,7 @@ class RegexMatcher:
 
         r_s = ur'\s'
         r_or = ur'|'
-
+        """
         r_baby_name = ur'(((?<=\s|^)(?!(' + r_ngaydacbiet + r_or + r_sohuu + r_or + r_danhxung + r_or + r_dacdiem + r_or + r_quanhe \
                       + r_or + r_prefixtuoi + r_or + r_ngaythang + r_or + r_neg_names + ur')\s)\w+\s(([-&]|và)\s)?){1,4}(\p{Lu}[\p{Ll}_]+\s)*)'
 
@@ -61,7 +61,33 @@ class RegexMatcher:
                  + ur'(' + r_baby_name + r_baby_right + ur')|' \
                  + ur'((\(|\"\")\s((\p{Lu}[\p{Ll}_]+(\s([-&]\s)?\p{Lu}[\p{Ll}_]+){0,3}))\s(\)|\"\"))' + ur')'
 
+        """
+        r_baby_name = ur'(((?<=\s|^)(?!(r_ngaydacbiet|r_sohuu|r_danhxung|r_dacdiem|r_quanhe|r_prefixtuoi|r_ngaythang|r_neg_names)\s)\w+\s(([-&]|và)\s)?){1,4}(\p{Lu}[\p{Ll}_]+\s)*)'
+        r_a = ur'((r_ngaydacbiet|r_danhxung)r_s)'
+        r_b = ur'((r_dacdiem|r_prefixtuoi|(r_sohuur_sr_quanhe))r_s)'
+
+        r_baby_left = ur'(r_a((?:(r_ngaydacbietr_s)?)(?:(r_sohuur_s)?)(?:(r_danhxungr_s(?:(r_dacdiemr_s)?))?)))'
+        r_baby_right = ur'(r_b((?:(r_dacdiemr_s)?)(?:(r_sohuur_s)?)(?:(r_quanher_s)?)(?:(r_prefixtuoir_s)?)))'
+        r_baby = ur'((r_baby_leftr_baby_namer_baby_right)|(r_baby_leftr_baby_name)|(r_baby_namer_baby_right)|' \
+            + ur'((\(|\"\")\s((\p{Lu}[\p{Ll}_]+(\s([-&]\s)?\p{Lu}[\p{Ll}_]+){0,3}))\s(\)|\"\")))'
+
+        r_baby = re.sub(u"r_baby_left", r_baby_left, r_baby)
+        r_baby = re.sub(u"r_baby_right", r_baby_right, r_baby)
+        r_baby = re.sub(u"r_baby_name", r_baby_name, r_baby)
+        r_baby = re.sub(u"r_a", r_a, r_baby)
+        r_baby = re.sub(u"r_b", r_b, r_baby)
+        r_baby = re.sub(u"r_prefixtuoi", r_prefixtuoi, r_baby)
+        r_baby = re.sub(u"r_ngaydacbiet", r_ngaydacbiet, r_baby)
+        r_baby = re.sub(u"r_ngaythang", r_ngaythang, r_baby)
+        r_baby = re.sub(u"r_quanhe", r_quanhe, r_baby)
+        r_baby = re.sub(u"r_dacdiem", r_dacdiem, r_baby)
+        r_baby = re.sub(u"r_sohuu", r_sohuu, r_baby)
+        r_baby = re.sub(u"r_danhxung", r_danhxung, r_baby)
+        r_baby = re.sub(u"r_neg_names", r_neg_names, r_baby)
+        r_baby = re.sub(u"r_s", r_s, r_baby)
+
         self.name_reg = re.compile(r_baby, flags=re.UNICODE)
+
         "---- End Regular Expression for Baby Name Detect ---"
 
         r_ngaydacbiet_age = ur'((đ|Đ)ầy_(T|t)háng|(b|B)irthday|(t|T)hôi_(N|n)ôi|(s|S)inh_(N|n)hật|(S|s)nzz|(S|s)nvv)'
@@ -180,85 +206,85 @@ if __name__ == '__main__':
     print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'lắc_lư theo điệu nhạc của chị Trang Moon và suy_nghĩ về nước Mỹ'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'đầy_tháng con_nhà kiều Tũn Nguyễn Quoc Hung'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'chúc_mừng cháu yêu Minh Khôi'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'chúc_mừng gia_đình đại ka Jimmy Tào có thêm thiên_thần mới'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'"" Ku Tom "" ( Phạm Thị Hoa ) ( pham Thi Hong ) ( Pham Ngoc Cam_Tu ) ( Phạm Cẩm_Tú ) ( 14/02/2017 )'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Vì vậy mấy mem đừng thả hoa khi em post hình này lên nhé'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Tròn 2 tuoi em đã biết gọi điện thoại nói_chuyện với mẹ nheo_nhẽo hỏi xem mẹ đỡ chưa ?'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'chúc bé Hary mau ăn chóng lớn . Thảo hương của mẹ tròn 5 tuổi'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'1 Thảo hương của mẹ tròn 5 tuổi'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Đầy_tháng bé Nhộng ( Phạm Ngọc Cẩm_Tú )'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Đầy_tháng cục cưng Tánh Kì'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Happy Birthday đại_ca Mimi'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Hôm_nay sinh_nhật. Tặng quà cho bé Mimi yêu nè'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Mừng Mimi - Uyên Nhi tròn 2 tuổi'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Qua đầy_tháng Nana'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Hôm_nay Ken yêu của mẹ tròn'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Thôi_nôi cu Beo'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Sinh_nhật cháu Phan Anh'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Sinh_nhật Đăng Khoa'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Sinh_nhật ST Hong Ngu'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Chúc bé My & Mu snvv'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Thôi_nôi tien dat'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Đầy_tháng Tony của mẹ lam'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'chúc bé Hary mau ăn chóng lớn'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Ngu si dốt nát đần'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Đặc_biệt là bớt nghịch chút con yêu nhé'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     word_ids = u'Yêu con'.split(' ')
-    regex_matcher.annotate_name(word_ids)
+    print regex_matcher.annotate_name(word_ids)
 
     '''
 
