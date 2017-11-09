@@ -1,8 +1,6 @@
 import tensorflow as tf
-import numpy as np
 from nn_utils import initialize_matrix, build_biRNN, crf_decode_with_batch, pad_common, pad_char, \
-    load_pretrained_word2vec
-from custom import Attention_GRUCell  # not test yet
+    load_pretrained_word2vec, batch_norm_layer, build_selfAttention
 
 
 class NERModel:
@@ -10,7 +8,7 @@ class NERModel:
                  char_emb_dim, word_emb_dim, cap_emb_dim, pos_emb_dim, reg_emb_dim,
                  char_hid_dim, word_hid_dim,
                  nn_for_char, dropout_prob, lr, optimize_method, clip,
-                 dir_summary, pre_emb_path):
+                 dir_summary, pre_emb_path, use_zoneout, use_bn_recurrent):
         self.id2char = id2char
         self.id2word = id2word
         self.id2label = id2label
@@ -42,6 +40,9 @@ class NERModel:
                                                     pre_emb_path=pre_emb_path) if pre_emb_path != '' else None
         self.freq_equal_summary = 10
 
+        self.use_zoneout = use_zoneout
+        self.use_bn_recurrent = use_bn_recurrent
+
     def __build_placeholder(self):
         self.char_ids = tf.placeholder(dtype=tf.int32, shape=[None, None, None],
                                        name='char_ids')  # batch x max_len_sent x max_len_word
@@ -56,7 +57,7 @@ class NERModel:
 
         self.labels = tf.placeholder(dtype=tf.int32, shape=[None, None], name='labels')
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
-        self.is_training = True
+        self.is_training = tf.placeholder(dtype=tf.bool, shape=[], name="is_training")
 
     def __build_word_input(self):
         #
@@ -72,27 +73,26 @@ class NERModel:
         self.CAP_EMB = initialize_matrix(shape=(len(self.id2cap), self.cap_emb_dim), name='cap_emb')
         self.POS_EMB = initialize_matrix(shape=(len(self.id2pos), self.pos_emb_dim), name='pos_emb')
 
-        with tf.variable_scope('input_embedding'):
-            self.char_enc = tf.nn.embedding_lookup(self.CHAR_EMB, self.char_ids)
-            self.word_enc = tf.nn.embedding_lookup(self.WORD_EMB, self.word_ids)
-            self.cap_enc = tf.nn.embedding_lookup(self.CAP_EMB, self.cap_ids)
-            self.pos_enc = tf.nn.embedding_lookup(self.POS_EMB, self.pos_ids)
+        self.char_enc = tf.nn.embedding_lookup(self.CHAR_EMB, self.char_ids)
+        self.word_enc = tf.nn.embedding_lookup(self.WORD_EMB, self.word_ids)
+        self.cap_enc = tf.nn.embedding_lookup(self.CAP_EMB, self.cap_ids)
+        self.pos_enc = tf.nn.embedding_lookup(self.POS_EMB, self.pos_ids)
 
-            #
-            # Build word representation by concat all feature representation
-            #
-            word_from_char = self.__build_word_from_char()
-            features = [self.word_enc, word_from_char, self.cap_enc, self.pos_enc]
+        #
+        # Build word representation by concat all feature representation
+        #
+        word_from_char = self.__build_word_from_char()
+        features = [self.word_enc, word_from_char, self.cap_enc, self.pos_enc]
 
-            #
-            # Using regex as an additional feature
-            #
-            if self.id2reg != None:
-                self.REG_EMB = initialize_matrix(shape=(len(self.id2reg), self.reg_emb_dim), name='reg')
-                self.reg_enc = tf.nn.embedding_lookup(self.REG_EMB, self.reg_ids)
-                features.append(self.reg_enc)
+        #
+        # Using regex as an additional feature
+        #
+        if self.id2reg != None:
+            self.REG_EMB = initialize_matrix(shape=(len(self.id2reg), self.reg_emb_dim), name='reg')
+            self.reg_enc = tf.nn.embedding_lookup(self.REG_EMB, self.reg_ids)
+            features.append(self.reg_enc)
 
-            self.fn_word_enc = tf.concat(features, axis=2)
+        self.fn_word_enc = tf.concat(features, axis=2)
 
     # Build word representation from character level
     # We have two approach:
@@ -117,78 +117,80 @@ class NERModel:
         return word_from_char
 
     def __build_sequence_tagging(self):
-        with tf.variable_scope('model_loss'):
-            #
-            # Calculate loss for mode training
-            #
-            log_likelihood, self.transition = tf.contrib.crf.crf_log_likelihood(
-                inputs=self.fn_scores, tag_indices=self.labels, sequence_lengths=self.sentence_length
-            )
+        #
+        # Calculate loss for mode training
+        #
+        log_likelihood, self.transition = tf.contrib.crf.crf_log_likelihood(
+            inputs=self.fn_scores, tag_indices=self.labels, sequence_lengths=self.sentence_length
+        )
 
-            self.train_loss = tf.reduce_mean(-log_likelihood)
+        self.train_loss = tf.reduce_mean(-log_likelihood)
 
-            #
-            # Calculate loss for mode evaluating (just for summarizer)
-            #
-            eval_log_likelihood, _ = tf.contrib.crf.crf_log_likelihood(transition_params=self.transition,
-                                                                       inputs=self.fn_scores,
-                                                                       tag_indices=self.labels,
-                                                                       sequence_lengths=self.sentence_length)
+        #
+        # Calculate loss for mode evaluating (just for summarizer)
+        #
+        eval_log_likelihood, _ = tf.contrib.crf.crf_log_likelihood(transition_params=self.transition,
+                                                                   inputs=self.fn_scores,
+                                                                   tag_indices=self.labels,
+                                                                   sequence_lengths=self.sentence_length)
 
-            self.eval_loss = tf.reduce_mean(-eval_log_likelihood)
+        self.eval_loss = tf.reduce_mean(-eval_log_likelihood)
 
     def __build_optimizer(self):
-        with tf.variable_scope('optimizer'):
-            if self.optimize_method == 'adam':
-                optimizer = tf.train.AdamOptimizer(self.lr)
-            elif self.optimize_method == 'sgd':
-                optimizer = tf.train.GradientDescentOptimizer(self.lr)
-            elif self.optimize_method == 'adadelta':
-                optimizer = tf.train.AdadeltaOptimizer(self.lr)
-            elif self.optimize_method == 'adagrad':
-                optimizer = tf.train.AdagradOptimizer(self.lr)
-            elif self.optimize_method == 'rmsprop':
-                optimizer = tf.train.RMSPropOptimizer(self.lr)
-            else:
-                raise Exception('Optimizer method not be included yet')
+        if self.optimize_method == 'adam':
+            optimizer = tf.train.AdamOptimizer(self.lr)
+        elif self.optimize_method == 'sgd':
+            optimizer = tf.train.GradientDescentOptimizer(self.lr)
+        elif self.optimize_method == 'adadelta':
+            optimizer = tf.train.AdadeltaOptimizer(self.lr)
+        elif self.optimize_method == 'adagrad':
+            optimizer = tf.train.AdagradOptimizer(self.lr)
+        elif self.optimize_method == 'rmsprop':
+            optimizer = tf.train.RMSPropOptimizer(self.lr)
+        else:
+            raise Exception('Optimizer method not be included yet')
 
-            if self.clip > 0:
-                grads, vars = zip(*optimizer.compute_gradients(self.train_loss))
-                clipped_grads, _ = tf.clip_by_global_norm(grads, self.clip)
-                self.train_op = optimizer.apply_gradients(zip(clipped_grads, vars))
-            else:
-                self.train_op = optimizer.minimize(self.train_loss)
+        if self.clip > 0:
+            grads, vars = zip(*optimizer.compute_gradients(self.train_loss))
+            clipped_grads, _ = tf.clip_by_global_norm(grads, self.clip)
+            self.train_op = optimizer.apply_gradients(zip(clipped_grads, vars))
+        else:
+            self.train_op = optimizer.minimize(self.train_loss)
 
-    def __build_fully_connected(self, in_dim, out_dim, input, activation, name='proj', scope='proj', batch_norm=False):
-        with tf.variable_scope(scope):
+    def __build_fully_connected(self, in_dim, out_dim, input, activation, name='dense', batch_norm=False,
+                                is_training=None):
 
-            setattr(self, 'W_%s' % name, initialize_matrix(shape=(in_dim, out_dim), name='w1_' + name))
-            setattr(self, 'b_%s' % name, initialize_matrix(shape=(out_dim,), name='b_' + name))
+        setattr(self, 'W_%s' % name, initialize_matrix(shape=(in_dim, out_dim), name='w1_' + name))
+        setattr(self, 'b_%s' % name, initialize_matrix(shape=(out_dim,), name='b_' + name))
 
-            if activation == 'tanh':
-                activate = tf.tanh
-            elif activation == 'sigmoid':
-                activate = tf.sigmoid
-            elif activation == None:
-                activate = lambda x: x
-            else:
-                raise Exception('Activation method not be implmented yet !!')
+        if activation == 'tanh':
+            activate = tf.tanh
+        elif activation == 'sigmoid':
+            activate = tf.sigmoid
+        elif activation == None:
+            activate = lambda x: x
+        else:
+            raise Exception('Activation method not be implemented yet !!')
 
-            s = tf.shape(input)
-            s_lst = input.get_shape().as_list()
+        s = tf.shape(input)
+        s_lst = input.get_shape().as_list()
 
-            W = getattr(self, 'W_%s' % name)
-            b = getattr(self, 'b_%s' % name)
+        W = getattr(self, 'W_%s' % name)
+        b = getattr(self, 'b_%s' % name)
 
+        if len(s_lst) > 2:
             input = tf.reshape(input, shape=(s[0] * s[1], s_lst[-1]))
-            z = tf.matmul(input, W) + b
 
-            if batch_norm:
-                z = self.batch_norm_wrapper(inputs=z, is_training=self.is_training)
+        z = tf.matmul(input, W) + b
 
-            a = activate(z)
+        if batch_norm:
+            if is_training == False:
+                raise Exception('Invalid argument is_training(must be True or False)')
+            z = batch_norm_layer(z, training=is_training, name='batch_norm_' + name)
 
-            return tf.reshape(a, shape=(s[0], s[1], out_dim))
+        a = activate(z)
+
+        return tf.reshape(a, shape=(s[0], s[1], out_dim)) if len(s_lst) > 2 else a
 
     def __build_summary(self):
         tf.summary.scalar("loss", self.train_loss)
@@ -196,74 +198,64 @@ class NERModel:
         self.train_writer = tf.summary.FileWriter(self.dir_summary + '/train', self.sess.graph)
         self.eval_writer = tf.summary.FileWriter(self.dir_summary + '/test')
 
-    def batch_norm_wrapper(self, inputs, is_training, decay=0.999, epsilon=1e-3):
-        inputs_shape = tf.shape(inputs)
-        inputs_shape_lst = inputs.get_shape().as_list()
-
-        if len(inputs_shape_lst) > 2:
-            inputs = tf.reshape(inputs, shape=(inputs_shape[0] * inputs_shape[1], inputs_shape_lst[-1]))
-
-        scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
-        beta = tf.Variable(tf.zeros([inputs.get_shape()[-1]]))
-        pop_mean = tf.Variable(tf.zeros([inputs.get_shape()[-1]]), trainable=False)
-        pop_var = tf.Variable(tf.ones([inputs.get_shape()[-1]]), trainable=False)
-
-        if is_training:
-            batch_mean, batch_var = tf.nn.moments(inputs, [0])
-            train_mean = tf.assign(pop_mean, pop_mean * decay + batch_mean * (1 - decay))
-            train_var  = tf.assign(pop_var, pop_var * decay + batch_var * (1 - decay))
-            with tf.control_dependencies([train_mean, train_var]):
-                res = tf.nn.batch_normalization(inputs, batch_mean, batch_var, beta, scale, epsilon)
-        else:
-            res = tf.nn.batch_normalization(inputs, pop_mean, pop_var, beta, scale, epsilon)
-
-        if len(inputs_shape_lst) > 2:
-            res = tf.reshape(res,shape=(inputs_shape[0],inputs_shape[1], inputs_shape_lst[-1]))
-
-        return res
-
     def build(self):
-        #
-        # initialize model and build word representation
-        #
-        self.__build_placeholder()
-        self.__build_word_input()
+        with tf.variable_scope('embedding'):
+            #
+            # initialize model and build word representation
+            #
+            self.__build_placeholder()
+            self.__build_word_input()
 
-        self.fn_word_enc = self.batch_norm_wrapper(inputs=self.fn_word_enc,is_training=self.is_training)
-        self.fn_word_enc = tf.nn.dropout(self.fn_word_enc, keep_prob=self.dropout)
+            self.fn_word_enc = batch_norm_layer(self.fn_word_enc, training=self.is_training, name='bach_norm_word')
+            self.fn_word_enc = tf.nn.dropout(self.fn_word_enc, keep_prob=self.dropout)
 
-        #
-        # apply two bi-LSTM for word representation, then dropout some units
-        #
-        self.fn_w_v1 = build_biRNN(input=self.fn_word_enc, hid_dim=self.word_hid_dim,
-                                   sequence_length=self.sentence_length,
-                                   cells=None, mode='other', scope='word_bidirection_v1')
+        with tf.variable_scope('bi_lstm'):
+            #
+            # apply two bi-LSTM for word representation, then dropout some units
+            #
+            self.fn_w_v1 = build_biRNN(input=self.fn_word_enc, hid_dim=self.word_hid_dim, is_training=self.is_training,
+                                       sequence_length=self.sentence_length, cells=None, mode='other',
+                                       scope='word_bidirection_lstm_v1', use_zoneout=self.use_zoneout,
+                                       use_bnlstm=self.use_bn_recurrent)
 
-        bn_fn_w_v1 = self.batch_norm_wrapper(inputs=self.fn_w_v1, is_training=self.is_training)
+            self.fn_w_v1 = batch_norm_layer(self.fn_w_v1, training=self.is_training, name='batch_norm_lstm1')
 
-        self.fn_w_v2 = build_biRNN(input=bn_fn_w_v1, hid_dim=self.word_hid_dim, sequence_length=self.sentence_length,
-                                   cells=None, mode='other', scope='word_bidirection_v2')
-        self.fn_output = self.batch_norm_wrapper(inputs=self.fn_w_v2,is_training=self.is_training)
+            '''
+            self.fn_w_v2 = build_biRNN(input=self.fn_w_v1, hid_dim=self.word_hid_dim, is_training=self.is_training,
+                                       sequence_length=self.sentence_length,cells=None, mode='other',
+                                       scope='word_bidirection_lstm_v2', use_zoneout=self.use_zoneout, use_bnlstm=self.use_bn_recurrent)
+            '''
+            # Note that: Attention consumes so much memory and computation, so i decided to decrease word hidden embedding from 100 downto 50.
+            # But it still take about 2 hours to finish training phase (~1000 samples).
+            # If you don't wanna use this, so turn word hidden embedding back to 100, because this is the best value i found for previous configs.
+            self.fn_w_v2 = build_selfAttention(input=self.fn_w_v1, hid_dim=2 * self.word_hid_dim,
+                                               sequence_length=self.sentence_length, scope='self_attention')
 
-        #
-        # fully connected layer to project from (2 x word_hid_dim) shape to (n_tag)
-        #
-        num_label = len(self.id2label)
-        tanh_scores = self.__build_fully_connected(in_dim=2 * self.word_hid_dim, out_dim=self.word_hid_dim,
-                                                   input=self.fn_output, activation='tanh', name='proj_v1',
-                                                   scope='fully_connected')
-        self.fn_scores = self.__build_fully_connected(in_dim=self.word_hid_dim, out_dim=num_label, input=tanh_scores,
-                                                      activation=None, name='proj_v2', scope='fully_connected')
+            #self.fn_output = batch_norm_layer(self.fn_w_v2, training=self.is_training, name='batch_norm_lstm2')
+            self.fn_output = self.fn_w_v2
+        with tf.variable_scope('fully_connected'):
+            #
+            # fully connected layer to project from (2 x word_hid_dim) shape to (n_tag)
+            #
 
-        #
-        # Sequence level tagging (or CRF)
-        #
-        self.__build_sequence_tagging()
+            num_label = len(self.id2label)
 
-        #
-        # Optimizer
-        #
-        self.__build_optimizer()
+            tanh_scores = self.__build_fully_connected(in_dim=2 * self.word_hid_dim, out_dim=self.word_hid_dim,
+                                                       input=self.fn_output, activation='tanh', name='dense_v1')
+            self.fn_scores = self.__build_fully_connected(in_dim=self.word_hid_dim, out_dim=num_label,
+                                                          input=tanh_scores, activation=None, name='dense_v2')
+
+        with tf.variable_scope('sequence_tagging'):
+            #
+            # Sequence level tagging (or CRF)
+            #
+            self.__build_sequence_tagging()
+
+        with tf.variable_scope('optimizer'):
+            #
+            # Optimizer
+            #
+            self.__build_optimizer()
 
         #
         # Build session
@@ -277,7 +269,7 @@ class NERModel:
         #
         self.__build_summary()
 
-    def __create_feed_dict(self, batch, use_label=True, dropout_keep_prob=1.0):
+    def __create_feed_dict(self, batch, use_label=True):
         max_sentence_length = max(map(lambda x: len(x), [e['word_ids'] for e in batch]))
 
         ip_char_ids, word_length = pad_char(sequences=[e['char_ids'] for e in batch], pad_tok=0)
@@ -293,7 +285,6 @@ class NERModel:
                 pad_common(sequences=[e['pos_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0],
             self.sentence_length: sentence_length,
             self.word_length: word_length,
-            self.dropout: dropout_keep_prob,
         }
 
         if use_label:
@@ -307,13 +298,14 @@ class NERModel:
         return res
 
     def batch_run(self, batch, i, mode='train'):
-        ip_feed_dict = self.__create_feed_dict(batch, dropout_keep_prob=self.dropout_prob if mode == 'train' else 1.0)
+        ip_feed_dict = self.__create_feed_dict(batch)
         sentece_lengths = ip_feed_dict[self.sentence_length]
 
         if mode == 'train':
-            self.is_training = True
-            _, loss, summary = self.sess.run([self.train_op, self.train_loss, self.merged],
-                                             feed_dict=ip_feed_dict)
+            ip_feed_dict[self.is_training] = True
+            ip_feed_dict[self.dropout] = self.dropout_prob
+
+            _, loss, summary = self.sess.run([self.train_op, self.train_loss, self.merged], feed_dict=ip_feed_dict)
 
             if i % self.freq_equal_summary == 0:
                 self.train_writer.add_summary(summary, i)
@@ -321,12 +313,15 @@ class NERModel:
             out = loss
 
         elif mode == 'eval':
-            self.is_training = False
+            ip_feed_dict[self.is_training] = False
+            ip_feed_dict[self.dropout] = 1.0
+
             loss, scores, transition, summary = self.sess.run(
                 [self.eval_loss, self.fn_scores, self.transition, self.merged],
                 feed_dict=ip_feed_dict)
             predict_labels, _ = crf_decode_with_batch(scores=scores, sentence_lengths=sentece_lengths,
                                                       transition=transition)
+
             if i % self.freq_equal_summary == 0:
                 self.eval_writer.add_summary(summary, i)
 

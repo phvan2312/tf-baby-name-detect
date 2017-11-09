@@ -225,7 +225,7 @@ khác O O
 ) O O
 \n O O
 Chúc O O
-Mila B-NAME B-NAME
+Mila B-NAME O
 của O O
 gia_đình O O
 mau O O
@@ -376,9 +376,9 @@ chóng O O
 lớn O O
 nhé O O
 <number> O O
-Hiii O O
+Hiii O B-NAME
 
-Nàng O B-NAME
+Nàng O O
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -565,14 +565,14 @@ Nhanh O O
 quá O O
 <punct> O O
 Thế_là O O
-út B-NAME O
+út B-NAME B-NAME
 cưng O O
 của O O
 mẹ O O
 lại O O
 tròn O O
-hai B-AGE O
-tuổi I-AGE O
+hai B-AGE B-AGE
+tuổi I-AGE I-AGE
 rồi O O
 <number> O O
 Chúc_mừng O O
@@ -682,8 +682,8 @@ bà_Mụ O O
 đã O O
 che_chở O O
 bé O O
-<number> O B-AGE
-tháng O I-AGE
+<number> O O
+tháng O O
 <number> O O
 ngày O O
 để O O
@@ -1048,7 +1048,7 @@ s O O
 post O O
 
 Chúc O O
-trang B-NAME O
+trang B-NAME B-NAME
 sinh_nhật O O
 vui_vẻ O O
 mau O O
@@ -1230,7 +1230,7 @@ Happy O O
 brithday O O
 con_gái O O
 lần B-AGE O
-thứ I-AGE O
+thứ I-AGE I-AGE
 <number> I-AGE O
 <punct> O O
 DT O O
@@ -1426,7 +1426,7 @@ tiệc O O
 đầy_tháng B-AGE B-AGE
 con_gái O O
 \n O O
-youtube O B-AGE
+youtube O O
 <number> O O
 com O O
 
@@ -1434,7 +1434,7 @@ Trc O O
 khi O O
 đón O O
 em O O
-bơ B-NAME O
+bơ B-NAME B-NAME
 mẹ O O
 lo O O
 cho O O
@@ -1443,7 +1443,7 @@ bo B-NAME O
 trc O O
 <number> O O
 anh O O
-bo B-NAME O
+bo B-NAME B-NAME
 lớn O O
 đồ O O
 chật O O
@@ -1712,9 +1712,9 @@ post O O
 
 Dấu_ấn O O
 đầy_tháng B-AGE B-AGE
-con_nhà O O
-kiều O O
-Tũn B-NAME O
+con_nhà O B-NAME
+kiều O I-NAME
+Tũn B-NAME I-NAME
 Nguyễn I-NAME O
 Quoc I-NAME O
 Hung I-NAME O
@@ -1768,7 +1768,7 @@ nè O O
 \n O O
 P/S O O
 <punct> O O
-ẺM O O
+ẺM O B-NAME
 CỦA O O
 NGÀY O O
 HÔM_NAY O O
@@ -1863,8 +1863,8 @@ Kaiserin O O
 <number> O O
 Sinh_nhật O O
 anh O O
-hai O B-NAME
-Gấu B-NAME I-NAME
+hai O O
+Gấu B-NAME B-NAME
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -1920,8 +1920,8 @@ mừng O O
 đầy_tháng B-AGE B-AGE
 cháu O O
 nội_tại O O
-miền O O
-nam O O
+miền O B-NAME
+nam O I-NAME
 <punct> O O
 Hôn O O
 Chiều O O
@@ -2032,7 +2032,7 @@ cho O O
 các O O
 bạn O O
 bé O O
-lít_nhít B-NAME B-NAME
+lít_nhít B-NAME O
 chuẩn_bị O O
 đầy_tháng B-AGE B-AGE
 à O O
@@ -2069,8 +2069,8 @@ Già O O
 rồi O O
 <number> O O
 Có O O
-nếp O B-NAME
-nhăn O I-NAME
+nếp O O
+nhăn O O
 rồi O O
 <punct> O O
 hôm_nay O O
@@ -2116,8 +2116,8 @@ theo O O
 nhạc O O
 của O O
 chị O O
-Trang B-NAME O
-Moon I-NAME O
+Trang B-NAME B-NAME
+Moon I-NAME I-NAME
 và O O
 suy_nghĩ O O
 về O O
@@ -2147,13 +2147,13 @@ chú O O
 thả O O
 thính O O
 má O O
-Ken B-NAME O
+Ken B-NAME B-NAME
 nữa O O
 <punct> O O
 má O O
 là O O
 của O O
-Ken B-NAME O
+Ken B-NAME B-NAME
 thôi O O
 <punct> O O
 Cuối O O
@@ -2495,7 +2495,7 @@ nè O O
 \n O O
 P/S O O
 <punct> O O
-ẺM O O
+ẺM O B-NAME
 CỦA O O
 NGÀY O O
 HÔM_NAY O O
@@ -2520,8 +2520,8 @@ s O O
 post O O
 
 Sinh_nhật O O
-Anh_chàng O O
-đep O B-NAME
+Anh_chàng O B-NAME
+đep O I-NAME
 trai O O
 của O O
 tui O O
@@ -2591,7 +2591,7 @@ hình O O
 nào O O
 với O O
 anh O O
-beer B-NAME O
+beer B-NAME B-NAME
 đẹp_trai O O
 hết O O
 ) O O
@@ -2813,7 +2813,7 @@ ngày O O
 rùi O O
 ba O O
 đi O O
-SG O O
+SG O B-NAME
 mà O O
 khóc O O
 như O O
@@ -2839,8 +2839,8 @@ yên O O
 <number> O O
 Giờ O O
 được O O
-<number> B-AGE B-AGE
-tháng I-AGE I-AGE
+<number> B-AGE O
+tháng I-AGE O
 <number> I-AGE O
 ngày I-AGE O
 <punct> O O
@@ -2848,7 +2848,7 @@ biết O O
 mẹ O O
 chuẩn_bị O O
 đi O O
-SG O O
+SG O B-NAME
 bỏ O O
 em O O
 ý O O
@@ -3169,8 +3169,8 @@ memory O O
 with O O
 Anh_Tuấn O O
 <number> O O
-Ái B-NAME O
-Niên I-NAME O
+Ái B-NAME B-NAME
+Niên I-NAME I-NAME
 \n O O
 <date> O O
 - O O
@@ -3185,7 +3185,7 @@ tròn O O
 tuổi I-AGE I-AGE
 <number> O O
 
-Bảo B-NAME O
+Bảo B-NAME B-NAME
 em O O
 hợp_tác O O
 chụp O O
@@ -3421,7 +3421,7 @@ tròn O O
 tuổi I-AGE I-AGE
 Thông_Báo O O
 Việt O O
-Sơn O B-NAME
+Sơn O O
 <number> O O
 <punct> O O
 Nhung O O
@@ -3662,7 +3662,7 @@ tròn O O
 ăn O O
 đầy_tháng O B-AGE
 người_yêu O O
-<date> B-NAME B-NAME
+<date> B-NAME O
 <punct> O O
 <punct> O O
 Hoàng O O
@@ -3690,9 +3690,9 @@ yêu O O
 <punct> O O
 phạm B-NAME O
 nhật I-NAME O
-An I-NAME O
-<number> B-AGE O
-tuổi I-AGE O
+An I-NAME I-NAME
+<number> B-AGE B-AGE
+tuổi I-AGE I-AGE
 <punct> O O
 mau O O
 ăn O O
@@ -3852,14 +3852,14 @@ mọi O O
 người O O
 
 Chúc O O
-Lam B-NAME O
+Lam B-NAME B-NAME
 và O O
 Trí B-NAME O
 sinh_nhật O O
 vui_vẻ O O
 <punct> O O
 Chúc O O
-2con O O
+2con O B-NAME
 mau O O
 ăn O O
 chóng O O
@@ -3887,7 +3887,7 @@ s O O
 post O O
 
 sinh_nhật O O
-muộn O O
+muộn O B-NAME
 vui_vẻ O O
 nha O O
 bé O O
@@ -4086,7 +4086,7 @@ Lê O O
 Tấn O O
 Sang O O
 <number> O O
-Tấn B-NAME O
+Tấn B-NAME B-NAME
 Sang I-NAME O
 của O O
 bố_mẹ O O
@@ -4238,7 +4238,7 @@ tên O O
 là O O
 Nguyễn B-NAME B-NAME
 Bảo I-NAME I-NAME
-Việt I-NAME I-NAME
+Việt I-NAME O
 <number> O O
 Hihi O O
 
@@ -4391,12 +4391,12 @@ memory O O
 Phuong O O
 \n O O
 THÔI_NÔI B-AGE B-AGE
-CU O B-NAME
-KEN B-NAME I-NAME
+CU O O
+KEN B-NAME B-NAME
 
 Tiệc O O
 đầy_tháng B-AGE B-AGE
-2chau O B-NAME
+2chau O O
 <punct> O O
 <date> O O
 Huyền O O
@@ -4501,13 +4501,13 @@ to O O
 the O O
 album O O
 <punct> O O
-Khủng_hoảng O O
+Khủng_hoảng O B-NAME
 tuổi O O
 lên O O
-<number> B-AGE O
+<number> B-AGE B-AGE
 của O O
-Minh B-NAME O
-KKen I-NAME O
+Minh B-NAME B-NAME
+KKen I-NAME I-NAME
 by O O
 Trinhngoc O O
 Lan O O
@@ -4520,7 +4520,7 @@ tuổi O O
 lên O O
 <number> B-AGE O
 của O O
-Minh B-NAME O
+Minh B-NAME B-NAME
 KKen I-NAME I-NAME
 
 Nhanh O O
@@ -4620,7 +4620,7 @@ Chị O O
 theo O O
 Dì O O
 về O O
-Huế O B-NAME
+Huế O O
 <punct> O O
 không O O
 có O O
@@ -4661,8 +4661,8 @@ thương O O
 lắm O O
 <number> O O
 Ai_ngờ O O
-<number> O O
-ngày O O
+<number> O B-AGE
+ngày O I-AGE
 rồi O O
 <punct> O O
 ra O O
@@ -4718,7 +4718,7 @@ the O O
 album O O
 <punct> O O
 Sinh_nhật O O
-<number> O O
+<number> O B-AGE
 bố O O
 con O O
 <punct> O O
@@ -4822,16 +4822,16 @@ sau O O
 năm O O
 còn O O
 tròn O O
-<number> B-AGE O
-tuổi I-AGE O
+<number> B-AGE B-AGE
+tuổi I-AGE I-AGE
 và O O
 sau O O
 <number> O O
 năm O O
 nữa O O
 con O O
-<number> B-AGE O
-tuổi I-AGE O
+<number> B-AGE B-AGE
+tuổi I-AGE I-AGE
 <number> O O
 Vậy O O
 là O O
@@ -4850,7 +4850,7 @@ tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
 là O O
-QM B-NAME O
+QM B-NAME B-NAME
 của O O
 mẹ O O
 đấy O O
@@ -4862,7 +4862,7 @@ nữa O O
 Chàng O O
 trai O O
 của O O
-Tui O O
+Tui O B-NAME
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -5015,9 +5015,9 @@ Anh I-NAME I-NAME
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
 - O O
-Thành_Đạt B-NAME O
-<number> B-AGE O
-tuổi I-AGE O
+Thành_Đạt B-NAME B-NAME
+<number> B-AGE B-AGE
+tuổi I-AGE I-AGE
 <punct> O O
 Hiển O O
 Mắt O O
@@ -5039,7 +5039,7 @@ tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
 anh O O
-Đạt B-NAME O
+Đạt B-NAME B-NAME
 - O O
 with O O
 Ngoc O O
@@ -5059,7 +5059,7 @@ post O O
 
 Con O O
 tên O O
-Bùi B-NAME O
+Bùi B-NAME B-NAME
 Hồng I-NAME I-NAME
 Đan I-NAME I-NAME
 <number> O O
@@ -5079,7 +5079,7 @@ Con O O
 được O O
 <number> B-AGE B-AGE
 tháng I-AGE I-AGE
-tuổi I-AGE O
+tuổi I-AGE I-AGE
 <number> O O
 Con O O
 cám_ơn O O
@@ -5095,11 +5095,11 @@ bác O O
 dành O O
 cho O O
 con O O
-Note O O
+Note O B-NAME
 <punct> O O
 mừng O O
 đầy_tháng B-AGE B-AGE
-D4 B-NAME B-NAME
+D4 B-NAME O
 <punct> O O
 <punct> O O
 Hg O O
@@ -5187,8 +5187,8 @@ kỷ_niệm O O
 ngày O O
 con_trai O O
 tròn O O
-<number> B-AGE O
-tuổi I-AGE O
+<number> B-AGE B-AGE
+tuổi I-AGE I-AGE
 - O O
 đọc O O
 và O O
@@ -5622,7 +5622,7 @@ sẵn O O
 dịp O O
 NỊNH_ĐẦM O O
 CON O O
-DÂU O O
+DÂU O B-NAME
 <number> O O
 nó O O
 nghe O O
@@ -6159,8 +6159,8 @@ post O O
 
 Sinh O O
 nhât O O
-Hải B-NAME O
-Yên I-NAME B-NAME
+Hải B-NAME I-NAME
+Yên I-NAME I-NAME
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -6242,14 +6242,14 @@ Kem B-NAME B-NAME
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
-Một O O
-tuần O O
+Một O B-AGE
+tuần O I-AGE
 trước O O
 ngày O O
 Sinh_Nhật O O
 bạn O O
 Kem B-NAME B-NAME
-thỏ_thẻ O I-NAME
+thỏ_thẻ O O
 với O O
 mẹ O O
 <punct> O O
@@ -6261,7 +6261,7 @@ Kem B-NAME B-NAME
 mẹ O O
 làm O O
 cho O O
-Kem B-NAME O
+Kem B-NAME B-NAME
 bánh O O
 sinh_nhật O O
 mà O O
@@ -6334,7 +6334,7 @@ người O O
 quà O O
 tuyệt_vời O O
 của O O
-Ong O O
+Ong O B-NAME
 Bà O O
 Nội O O
 <punct> O O
@@ -6507,8 +6507,8 @@ others O O
 at O O
 Nhà O O
 của O O
-Su B-NAME O
-Bơ I-NAME O
+Su B-NAME B-NAME
+Bơ I-NAME I-NAME
 <number> O O
 
 Chúc_mừng O O
@@ -6639,8 +6639,8 @@ nhiều O O
 "" O O
 <punct> O O
 "" O O
-Full B-AGE B-NAME
-month I-AGE O
+Full B-AGE B-AGE
+month I-AGE I-AGE
 con O O
 yêu O O
 "" O O
@@ -6678,8 +6678,8 @@ Ha O O
 s O O
 post O O
 
-Siêu B-NAME B-NAME
-quậy I-NAME I-NAME
+Siêu B-NAME O
+quậy I-NAME O
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -6719,7 +6719,7 @@ bên O O
 thân_yêu O O
 <number> O O
 Gia_đình O O
-Bobby B-NAME O
+Bobby B-NAME B-NAME
 xin O O
 cảm_ơn O O
 cả O O
@@ -6745,7 +6745,7 @@ mình O O
 <punct> O O
 Hôm_nay O O
 Dê B-NAME B-NAME
-con I-NAME I-NAME
+con I-NAME O
 đã O O
 được O O
 tròn O O
@@ -6863,7 +6863,7 @@ lại O O
 toe_toét O O
 thoai O O
 hê O O
-hê O I-NAME
+hê O O
 <punct> O O
 <punct> O O
 Hanna O O
@@ -6951,7 +6951,7 @@ làm O O
 rất O O
 siêng O O
 <number> O O
-Bảo O O
+Bảo O B-NAME
 sếp O O
 hàng O O
 cho O O
@@ -6963,8 +6963,8 @@ cho O O
 dễ O O
 là O O
 mới O O
-<number> B-AGE O
-tuổi I-AGE O
+<number> B-AGE B-AGE
+tuổi I-AGE I-AGE
 thui O O
 nhưng O O
 làm O O
@@ -7541,8 +7541,8 @@ Pon O O
 s O O
 post O O
 
-Tin O O
-béo B-NAME O
+Tin O B-NAME
+béo B-NAME I-NAME
 thôi_nôi B-AGE B-AGE
 <number> O O
 <punct> O O
@@ -7556,7 +7556,7 @@ _ O O
 _ O O
 <number> O O
 _ O O
-Pro O B-NAME
+Pro O O
 <number> O O
 mp4 O O
 
@@ -7679,7 +7679,7 @@ em O O
 ( O O
 rồng O O
 hoá O O
-mèo O B-NAME
+mèo O O
 ) O O
 <punct> O O
 Duong O O
@@ -7703,7 +7703,7 @@ post O O
 <punct> O O
 đầy_tháng O B-AGE
 của O O
-beken B-NAME B-NAME
+beken B-NAME O
 <punct> O O
 camon O O
 ông O O
@@ -7749,7 +7749,7 @@ s O O
 post O O
 
 Sinh_nhật O O
-giai O O
+giai O B-NAME
 yêu O O
 tròn O O
 <number> B-AGE B-AGE
@@ -7800,7 +7800,7 @@ tốt_đẹp O O
 nhất O O
 <number> O O
 yêu O O
-Sóc B-NAME O
+Sóc B-NAME B-NAME
 con O O
 nhiều O O
 <number> O O
@@ -7905,8 +7905,8 @@ tuổi I-AGE I-AGE
 <punct> O O
 <punct> O O
 Bé O O
-Hột B-NAME O
-Mít I-NAME O
+Hột B-NAME B-NAME
+Mít I-NAME I-NAME
 added O O
 <number> O O
 new O O
@@ -8007,10 +8007,10 @@ Trả O O
 ảnh O O
 cho O O
 em O O
-chíp B-NAME B-NAME
+chíp B-NAME O
 <number> O O
 Sinh_nhật O O
-<number> O O
+<number> O B-AGE
 <number> O O
 <number> O O
 <number> O O
@@ -8183,7 +8183,7 @@ Facebook O O
 chè O O
 xôi O O
 với O O
-Tùng_Lâm B-NAME O
+Tùng_Lâm B-NAME B-NAME
 ( O O
 Ben B-NAME B-NAME
 ) O O
@@ -8415,8 +8415,8 @@ album O O
 <punct> O O
 MỪNG O O
 THÔI_NÔI B-AGE B-AGE
-CÔ O B-NAME
-GAI O I-NAME
+CÔ O O
+GAI O O
 NHỎ O O
 CỦA O O
 MẸ O O
@@ -8450,7 +8450,7 @@ VY I-NAME O
 Mừng O O
 con_trai O O
 tròn O O
-tuổi O I-AGE
+tuổi O O
 <punct> O O
 ba O O
 mẹ O O
@@ -8603,7 +8603,7 @@ chóng O O
 lớn O O
 nhoa O O
 cục B-NAME B-NAME
-voang I-NAME I-NAME
+voang I-NAME O
 <number> O O
 <punct> O O
 Ai O O
@@ -8614,7 +8614,7 @@ Bon O O
 <number> O O
 
 Minh B-NAME B-NAME
-Hòa I-NAME I-NAME
+Hòa I-NAME O
 _ O O
 Minh B-NAME B-NAME
 Khang I-NAME I-NAME
@@ -8820,8 +8820,8 @@ tròn O O
 tuổi I-AGE I-AGE
 con_gái O O
 nhỏ O O
-Phụng B-NAME O
-Tiên I-NAME O
+Phụng B-NAME B-NAME
+Tiên I-NAME I-NAME
 <number> O O
 Photos O O
 from O O
@@ -8932,7 +8932,7 @@ s O O
 post O O
 
 Huyền B-NAME B-NAME
-my I-NAME O
+my I-NAME I-NAME
 thúi O O
 sinh_nhật O O
 tròn O O
@@ -8965,7 +8965,7 @@ cua O O
 me O O
 da O O
 tron O O
-mot B-AGE O
+mot B-AGE B-AGE
 tuoi I-AGE O
 
 Con O O
@@ -9241,7 +9241,7 @@ Trang_Trí O O
 Sinh_Nhật O O
 ĐẸP O O
 - O O
-ĐỘC O O
+ĐỘC O B-NAME
 - O O
 LẠ O O
 <punct> O O
@@ -9271,7 +9271,7 @@ Xuân O O
 Bình O O
 <number> O O
 Thôi_nôi B-AGE B-AGE
-MiA B-NAME O
+MiA B-NAME B-NAME
 << O O
 Bùi B-NAME O
 Nguyễn I-NAME O
@@ -9456,7 +9456,7 @@ tuổi I-AGE I-AGE
 Chúc_mừng O O
 sinh_nhật O O
 Gấu B-NAME B-NAME
-con I-NAME O
+con I-NAME I-NAME
 của O O
 dì O O
 tròn O O
@@ -9646,7 +9646,7 @@ Việt O O
 
 Mừng O O
 cục B-NAME B-NAME
-thúi I-NAME I-NAME
+thúi I-NAME O
 của O O
 mẹ O O
 tròn O O
@@ -9733,8 +9733,8 @@ post O O
 
 Thôi_nôi B-AGE B-AGE
 cháu O O
-nôi O B-NAME
-hoàng B-NAME I-NAME
+nôi O I-AGE
+hoàng B-NAME B-NAME
 khải I-NAME I-NAME
 vừa O O
 tròn O O
@@ -9830,7 +9830,7 @@ cục O O
 cưng O O
 của O O
 dì O O
-Út O B-NAME
+Út O O
 mau O O
 ăn O O
 chóng O O
@@ -9913,7 +9913,7 @@ the O O
 album O O
 <punct> O O
 Đức O B-NAME
-Anh O I-NAME
+Anh O O
 dự O O
 thôi_nôi B-AGE B-AGE
 em O O
@@ -9965,7 +9965,7 @@ con_gái O O
 bé_bỏng O O
 của O O
 chị O O
-Nhai O B-NAME
+Nhai O O
 Ninh O O
 <punct> O O
 Chúc O O
@@ -10421,7 +10421,7 @@ thôi_nôi B-AGE B-AGE
 rui O O
 sinh_nhật O O
 <punct> O O
-<number> O O
+<number> O B-AGE
 con O O
 yêu O O
 ăn O O
@@ -10574,8 +10574,8 @@ post O O
 
 Happy O O
 birthday O O
-<number> O O
-boéeeeeeee B-NAME B-NAME
+<number> O B-AGE
+boéeeeeeee B-NAME I-AGE
 <number> O O
 chúc O O
 <number> O O
@@ -10617,7 +10617,7 @@ Gia_Bảo O O
 s O O
 post O O
 <number> O O
-Gia_Bảo O B-NAME
+Gia_Bảo O O
 \n O O
 Chúc O O
 bé O O
@@ -10630,7 +10630,7 @@ lớn O O
 nhé O O
 cho O O
 Ẩm_Thực O O
-Gia_Bảo O B-NAME
+Gia_Bảo O O
 xin O O
 được O O
 cảm_ơn O O
@@ -10673,7 +10673,7 @@ tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
 <number> O O
-Su B-NAME O
+Su B-NAME B-NAME
 ngoan O O
 <punct> O O
 khoẻ_mạnh O O
@@ -10745,7 +10745,7 @@ năm O O
 nay O O
 hi_vọng O O
 được O O
-<number> O O
+<number> O B-AGE
 trái O O
 <punct> O O
 Có O O
@@ -10756,7 +10756,7 @@ ngoại O O
 hái O O
 để_dành O O
 cho O O
-Bún B-NAME O
+Bún B-NAME B-NAME
 & O O
 Barack B-NAME O
 <punct> O O
@@ -10863,7 +10863,7 @@ và O O
 ba O O
 Văn O O
 cho O O
-Bún B-NAME O
+Bún B-NAME B-NAME
 & O O
 Barack B-NAME O
 thưởng_thức O O
@@ -10872,8 +10872,8 @@ thưởng_thức O O
 
 Chúc_mừng O O
 sinh_nhật O O
-con O B-NAME
-BÙI B-NAME I-NAME
+con O O
+BÙI B-NAME B-NAME
 MAI I-NAME I-NAME
 PHƯƠNG I-NAME I-NAME
 tròn O O
@@ -11105,8 +11105,8 @@ Bon B-NAME B-NAME
 hôm O O
 sinh O O
 nhựt O O
-Nit B-NAME B-NAME
-Nat I-NAME I-NAME
+Nit B-NAME O
+Nat I-NAME B-NAME
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -11198,7 +11198,7 @@ post O O
 
 Thôi_nôi B-AGE B-AGE
 bé O O
-hải_đăng B-NAME O
+hải_đăng B-NAME B-NAME
 <punct> O O
 Đao O O
 Truong O O
@@ -11232,7 +11232,7 @@ Happy O O
 birthaday O O
 to O O
 Binh B-NAME O
-Minh I-NAME B-NAME
+Minh I-NAME O
 <punct> O O
 <punct> O O
 Mầm_non O O
@@ -11514,7 +11514,7 @@ post O O
 
 Đầy_tháng B-AGE B-AGE
 bé O O
-quý B-NAME O
+quý B-NAME B-NAME
 sang I-NAME O
 <punct> O O
 Dieu O O
@@ -11560,7 +11560,7 @@ s O O
 post O O
 
 em O O
-Tôm B-NAME O
+Tôm B-NAME B-NAME
 giống O O
 anh O O
 Koca B-NAME O
@@ -11619,7 +11619,7 @@ Cốm B-NAME B-NAME
 đi O O
 thôi_nôi O B-AGE
 anh O O
-Tin B-NAME O
+Tin B-NAME B-NAME
 nè O O
 <punct> O O
 Trả O O
@@ -11865,13 +11865,13 @@ post O O
 
 Ngày_mai O O
 là O O
-kumon B-NAME B-NAME
+kumon B-NAME O
 <number> O O
 nhà O O
 ta O O
 được O O
-<number> B-AGE O
-thang I-AGE O
+<number> B-AGE B-AGE
+thang I-AGE I-AGE
 roi O O
 <number> O O
 mong O O
@@ -11909,7 +11909,7 @@ ui O O
 và O O
 thương O O
 con O O
-nhùi O B-NAME
+nhùi O O
 <number> O O
 <punct> O O
 <punct> O O
@@ -12039,7 +12039,7 @@ Lê B-NAME B-NAME
 Minh I-NAME I-NAME
 Khôi I-NAME I-NAME
 - O O
-út O O
+út O B-NAME
 cưng O O
 của O O
 Ba O O
@@ -12110,7 +12110,7 @@ post O O
 
 Mừng O O
 trai O O
-iêu O O
+iêu O B-NAME
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -12142,7 +12142,7 @@ s O O
 post O O
 
 Tuổi O O
-<number> B-AGE O
+<number> B-AGE B-AGE
 mau O O
 ăn O O
 chóng O O
@@ -12171,7 +12171,7 @@ thực_hiện O O
 lời O O
 hứa O O
 của O O
-Ba O O
+Ba O B-NAME
 <punct> O O
 Tran O O
 ThanhHuong O O
@@ -12347,7 +12347,7 @@ khác O O
 <number> O O
 <number> O O
 \n O O
-Thảo_Nguyên B-NAME O
+Thảo_Nguyên B-NAME B-NAME
 của O O
 ba O O
 mẹ O O
@@ -12426,7 +12426,7 @@ s O O
 post O O
 
 Thôi_nôi B-AGE B-AGE
-tuổi O O
+tuổi O I-AGE
 mới O O
 vui_vẻ O O
 nha O O
@@ -12548,10 +12548,10 @@ post O O
 Nhanh O O
 thật O O
 <number> O O
-Pikachu B-NAME O
+Pikachu B-NAME B-NAME
 sắp O O
-<number> B-AGE O
-tuổi I-AGE O
+<number> B-AGE B-AGE
+tuổi I-AGE I-AGE
 òi O O
 <punct> O O
 <punct> O O
@@ -12676,7 +12676,7 @@ post O O
 
 Hôm_nay O O
 tục B-NAME B-NAME
-tưng I-NAME O
+tưng I-NAME I-NAME
 vừa O O
 tròn O O
 <number> B-AGE B-AGE
@@ -12700,8 +12700,8 @@ còn O O
 là O O
 em O O
 bé O O
-xíu O B-NAME
-xíu O I-NAME
+xíu O O
+xíu O O
 ẵm O O
 trên O O
 tay O O
@@ -12711,7 +12711,7 @@ em O O
 bé O O
 tròn O O
 <number> B-AGE B-AGE
-chuổi I-AGE O
+chuổi I-AGE I-AGE
 rồi O O
 <punct> O O
 bít O O
@@ -12760,7 +12760,7 @@ lý_do O O
 nhớ O O
 và O O
 yêu O O
-Hanoi O O
+Hanoi O B-NAME
 <punct> O O
 giờ_đây O O
 lý_do O O
@@ -12938,7 +12938,7 @@ Hà O O
 <number> O O
 
 Khải B-NAME B-NAME
-Kiệt I-NAME B-NAME
+Kiệt I-NAME I-NAME
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -12954,7 +12954,7 @@ dì O O
 nhà O O
 <punct> O O
 Chúc O O
-c B-NAME O
+c B-NAME B-NAME
 yêu O O
 mau O O
 ăn O O
@@ -12985,8 +12985,8 @@ s O O
 post O O
 
 Thôi_nôi B-AGE B-AGE
-tiến B-NAME O
-đạt I-NAME O
+tiến B-NAME B-NAME
+đạt I-NAME I-NAME
 <punct> O O
 Đặng O O
 An O O
@@ -13000,7 +13000,7 @@ tròn O O
 tuổi I-AGE I-AGE
 \n O O
 <date> O O
-~ O O
+~ O I-AGE
 <date> O O
 # O O
 <punct> O O
@@ -13074,7 +13074,7 @@ sinh_nhật O O
 Bảo B-NAME B-NAME
 Sam I-NAME I-NAME
 của O O
-Nội O B-NAME
+Nội O O
 tròn O O
 <number> B-AGE B-AGE
 tuổi I-AGE I-AGE
@@ -13146,8 +13146,8 @@ mẹ O O
 <punct> O O
 P/s O O
 <punct> O O
-Bảo B-NAME O
-Sam I-NAME B-NAME
+Bảo B-NAME B-NAME
+Sam I-NAME I-NAME
 cảm_ơn O O
 bà O O
 nội O O
@@ -13426,8 +13426,8 @@ nhá O O
 <punct> O O
 Happy O O
 birthday O O
-Tom B-NAME O
-Tom I-NAME B-NAME
+Tom B-NAME B-NAME
+Tom I-NAME I-NAME
 <punct> O O
 <punct> O O
 Phương O O
@@ -13439,8 +13439,8 @@ Liên O O
 
 Chúc_mừng O O
 Sinh_Nhật O O
-Anh O B-NAME
-Tít B-NAME I-NAME
+Anh O O
+Tít B-NAME B-NAME
 & O O
 Mít B-NAME B-NAME
 tròn O O
@@ -13540,7 +13540,7 @@ Thôi_nôi B-AGE B-AGE
 em O O
 RY B-NAME B-NAME
 - O O
-NHƯ_Ý B-NAME O
+NHƯ_Ý B-NAME B-NAME
 <date> O O
 em O O
 ơi O O
@@ -13654,7 +13654,7 @@ post O O
 CHào_mừng O O
 <number> O O
 em O O
-zja O B-NAME
+zja O O
 nhà O O
 chụy O O
 nha O O
@@ -13696,8 +13696,8 @@ happy O O
 Ek O O
 sinh_nhật O O
 con O O
-chi O O
-hà B-NAME O
+chi O B-NAME
+hà B-NAME I-NAME
 hả O O
 hôm_nay O O
 ha O O
@@ -13738,7 +13738,7 @@ sinh_nhật O O
 Chúc O O
 con_trai O O
 của O O
-út O O
+út O B-NAME
 thêm O O
 tuổi O O
 mới O O

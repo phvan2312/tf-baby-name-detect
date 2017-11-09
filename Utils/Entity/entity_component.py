@@ -40,20 +40,22 @@ class Entity_component(Component):
             'id2pos'  : dict['id2pos'],
             'id2cap'  : dict['id2cap'],
             'id2reg'  : dict['id2reg'],
-            'char_emb_dim' : 20, # 25 for bi-lstm is ok
+            'char_emb_dim' : 25, # 25 for bi-lstm is ok
             'word_emb_dim' : 100,
             'cap_emb_dim'  : 10,
             'pos_emb_dim'  : 10,
             'reg_emb_dim'  : 5,
             'char_hid_dim' : 20,
-            'word_hid_dim' : 100,
+            'word_hid_dim' : 50,
             'nn_for_char'  : 'bilstm',
-            'dropout_prob' : .5,
-            'lr' : .001,
+            'dropout_prob' : 0.5,
+            'lr' : .002,
             'optimize_method' : 'adam',
             'clip' : 1,
             'dir_summary' : 'Summary',
             'pre_emb_path': config['word2vec_path'],
+            'use_zoneout' : False,
+            'use_bn_recurrent':False,
         }
         # build model
         self.model = NERModel(**parameters)
@@ -83,7 +85,7 @@ class Entity_component(Component):
 
                 print '-- batch %i has loss %f' % (i, loss)
                 # caculate test set
-                if i % freq_eval == 0:
+                if i % freq_eval == 0 :
                     predictions = []
                     count = np.zeros((n_labels,n_labels), dtype=np.int32)
 

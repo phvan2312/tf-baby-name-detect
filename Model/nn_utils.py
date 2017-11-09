@@ -1,7 +1,20 @@
 import tensorflow as tf
 import numpy as np
 from gensim.models.keyedvectors import KeyedVectors
+from custom import ZoneoutWrapper, BNLSTMCell, batch_norm, SelfAttention
 
+def batch_norm_layer(input, training, name='batch_norm'):
+    ip_shape = tf.shape(input)
+    ip_shape_lst = input.get_shape().as_list()
+
+    if len(ip_shape_lst) > 2:
+        input = tf.reshape(input, shape=(ip_shape[0] * ip_shape[1], ip_shape_lst[-1]))
+
+    out = batch_norm(input, name, training)
+    if len(ip_shape_lst) > 2:
+        out = tf.reshape(out, shape=(ip_shape[0], ip_shape[1], ip_shape_lst[-1]))
+
+    return out
 
 def load_pretrained_word2vec(emb_size, id2word, pre_emb_path):
     vocab_size = len(id2word)
@@ -10,7 +23,7 @@ def load_pretrained_word2vec(emb_size, id2word, pre_emb_path):
     drange = np.sqrt(6. / (vocab_size + emb_size))
     W = drange * np.random.uniform(low=-1.0, high=1.0, size=(vocab_size, emb_size))
 
-    # load pretrained word2vec
+    # load pre-trained word2vec
     word2vec_model = KeyedVectors.load_word2vec_format(pre_emb_path, binary=True)
 
     # assign
@@ -22,7 +35,6 @@ def load_pretrained_word2vec(emb_size, id2word, pre_emb_path):
 
     print ('-- Total loaded from pretrained:', total_loaded)
     return W
-
 
 def initialize_matrix(shape, mode='xavier', name='embedding'):
     if len(shape) == 1:
@@ -36,8 +48,8 @@ def initialize_matrix(shape, mode='xavier', name='embedding'):
 
     return emb
 
-
-def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scope='biRNN'):
+def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scope='biRNN', use_zoneout=False,
+                is_training=None, use_bnlstm=False):
     s = tf.shape(input=input)
     s_lst = input.get_shape().as_list()
     fn_input_dim = s_lst[-1]  # this value must exactly be an integer.
@@ -46,8 +58,21 @@ def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scop
         if cells is not None:
             cell_fw, cell_bw = cells
         else:
-            cell_fw = tf.contrib.rnn.LSTMCell(hid_dim)
-            cell_bw = tf.contrib.rnn.LSTMCell(hid_dim)
+            cell_fw = tf.contrib.rnn.LSTMCell(hid_dim, initializer=tf.contrib.layers.xavier_initializer(),
+                                              use_peepholes=True)
+            cell_bw = tf.contrib.rnn.LSTMCell(hid_dim, initializer=tf.contrib.layers.xavier_initializer(),
+                                              use_peepholes=True)
+            if use_bnlstm:
+                if is_training == None:
+                    raise Exception('Invalid argument is_training (must be True or False)')
+                cell_fw = BNLSTMCell(hid_dim, is_training)
+                cell_bw = BNLSTMCell(hid_dim, is_training)
+
+            if use_zoneout:
+                if is_training == None:
+                    raise Exception('Invalid argument is_training (must be True or False)')
+                cell_fw = ZoneoutWrapper(cell_fw, is_training=is_training)
+                cell_bw = ZoneoutWrapper(cell_bw, is_training=is_training)
 
         if len(s_lst) > 3:  # for character
             input = tf.reshape(input, shape=(s[0] * s[1], s[2], fn_input_dim))
@@ -64,6 +89,32 @@ def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scop
 
         return final_output
 
+def build_selfAttention(input, hid_dim, sequence_length, scope):
+    # self-matching attention
+    with tf.variable_scope(scope):
+        W_mem_state = initialize_matrix(name='W_mem_state',shape=(hid_dim,hid_dim))
+        W_inp_state = initialize_matrix(name='W_inp_state',shape=(hid_dim,hid_dim))
+        V = initialize_matrix(name='V',shape=(hid_dim,1))
+        W_g = initialize_matrix(name='W_g',shape=(2*hid_dim,2*hid_dim))
+
+        params = {
+            'W_mem_state' : W_mem_state,
+            'W_inp_state' : W_inp_state,
+            'V' : V,
+            'W_g' : W_g,
+        }
+
+        cell_fw = SelfAttention(num_units=hid_dim,memory=input,params=params)
+        '''
+        cell_bw = SelfAttention(num_units=hid_dim,memory=input,params=params)
+
+        output, _ = tf.nn.bidirectional_dynamic_rnn(cell_fw=cell_fw, cell_bw=cell_bw, inputs=input,
+                                                        sequence_length=sequence_length, dtype=tf.float32)
+
+        return tf.concat(output,2)
+        '''
+        output, _  = tf.nn.dynamic_rnn(cell=cell_fw,inputs=input,sequence_length=sequence_length,dtype=tf.float32)
+        return output
 
 # params sentence_lengths contain integer value which is actual
 # length of each post in batch.
@@ -78,7 +129,6 @@ def crf_decode_with_batch(scores, sentence_lengths, transition):
         predict_scores.append(predict_score)
 
     return predict_labels, predict_scores
-
 
 # code from : https://github.com/guillaumegenthial/sequence_tagging
 # original method name : _pad_sequence
@@ -100,7 +150,6 @@ def pad_common(sequences, pad_tok, max_length):
         sequence_length += [min(len(seq), max_length)]
 
     return sequence_padded, sequence_length
-
 
 # code from : https://github.com/guillaumegenthial/sequence_tagging
 # original method name : pad_sequence

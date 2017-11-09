@@ -50,3 +50,4 @@ class Cap_component(Component):
         else:
             return 3
 
+
