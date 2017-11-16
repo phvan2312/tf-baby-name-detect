@@ -13,7 +13,7 @@ class RegexMatcher:
 
     def load_negative_name(self):
         neg_names = []
-        for line in open('./negative_name.csv', 'r'):
+        for line in open('./Utils/Regex/negative_name.csv', 'r'):
             neg_names.append(line.decode('utf-8').strip())
 
         r_neg_name = ur'(\d+|' + '|'.join(neg_names) + ur')'
@@ -91,7 +91,7 @@ class RegexMatcher:
         "---- End Regular Expression for Baby Name Detect ---"
 
         r_ngaydacbiet_age = ur'((đ|Đ)ầy_(T|t)háng|(b|B)irthday|(t|T)hôi_(N|n)ôi|(s|S)inh_(N|n)hật|(S|s)nzz|(S|s)nvv)'
-        r_tuoi = ur"(r_prefixtuoi(_|\s)\d{1,2}((_|\s)(T|t)háng)?(_|\s)(T|t)uổi)"
+        r_tuoi = ur"(<number>((_|\s)(T|t)háng)?(_|\s)(T|t)uổi)"
         r_age = ur"r_ngaydacbiet_age|r_tuoi"
 
         r_age = re.sub(u"r_ngaydacbiet_age", r_ngaydacbiet_age, r_age)
@@ -132,7 +132,9 @@ class RegexMatcher:
                                                                                match=match.group().encode('utf-8')))
 
             (s_id, e_id) = (match.start(), match.end())
-            res[s_id:e_id] = [('2' if res[c_id] == '0' else '1') if res[c_id] != ' '  else ' ' for c_id in
+            """res[s_id:e_id] = [('2' if res[c_id] == '0' else '1') if res[c_id] != ' '  else ' ' for c_id in
+                              xrange(s_id, e_id)]"""
+            res[s_id:e_id] = ['2' if res[c_id] != ' '  else ' ' for c_id in
                               xrange(s_id, e_id)]
 
         str_res = (''.join(res)).strip()
