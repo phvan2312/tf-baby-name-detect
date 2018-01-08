@@ -1,6 +1,6 @@
 import tensorflow as tf
-from nn_utils import initialize_matrix, build_biRNN, crf_decode_with_batch, pad_common, pad_char, \
-    load_pretrained_word2vec, batch_norm_layer, build_selfAttention
+from .nn_utils import initialize_matrix, build_biRNN, crf_decode_with_batch, pad_common, pad_char, \
+    load_pretrained_word2vec, batch_norm_layer, build_selfAttention, build_charCNN
 
 
 class NERModel:
@@ -8,7 +8,9 @@ class NERModel:
                  char_emb_dim, word_emb_dim, cap_emb_dim, pos_emb_dim, reg_emb_dim,
                  char_hid_dim, word_hid_dim,
                  nn_for_char, dropout_prob, lr, optimize_method, clip,
-                 dir_summary, pre_emb_path, use_zoneout, use_bn_recurrent):
+                 dir_summary, pre_emb_path,
+                 max_length_word, max_length_sentence,
+                 filter_sizes, num_filter):
         self.id2char = id2char
         self.id2word = id2word
         self.id2label = id2label
@@ -25,6 +27,9 @@ class NERModel:
         self.char_hid_dim = char_hid_dim
         self.word_hid_dim = word_hid_dim
 
+        self.filter_sizes = filter_sizes
+        self.num_filter = num_filter
+
         self.nn_for_char = nn_for_char
         self.dropout_prob = dropout_prob
         self.lr = lr
@@ -40,22 +45,22 @@ class NERModel:
                                                     pre_emb_path=pre_emb_path) if pre_emb_path != '' else None
         self.freq_equal_summary = 10
 
-        self.use_zoneout = use_zoneout
-        self.use_bn_recurrent = use_bn_recurrent
+        self.max_length_word = max_length_word
+        self.max_length_sentence = max_length_sentence
 
     def __build_placeholder(self):
-        self.char_ids = tf.placeholder(dtype=tf.int32, shape=[None, None, None],
+        self.char_ids = tf.placeholder(dtype=tf.int32, shape=[None, self.max_length_sentence, self.max_length_word],
                                        name='char_ids')  # batch x max_len_sent x max_len_word
-        self.word_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='word_ids')  # batch x max_len_sent
-        self.cap_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='cap_ids')  # batch x max_len_sent
-        self.pos_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='pos_ids')  # batch x max_len_sent
-        self.reg_ids = tf.placeholder(dtype=tf.int32, shape=[None, None], name='reg_ids')  # batch x mat_len_sent
+        self.word_ids = tf.placeholder(dtype=tf.int32, shape=[None, self.max_length_sentence], name='word_ids')  # batch x max_len_sent
+        self.cap_ids = tf.placeholder(dtype=tf.int32,  shape=[None, self.max_length_sentence], name='cap_ids')  # batch x max_len_sent
+        self.pos_ids = tf.placeholder(dtype=tf.int32,  shape=[None, self.max_length_sentence], name='pos_ids')  # batch x max_len_sent
+        self.reg_ids = tf.placeholder(dtype=tf.int32,  shape=[None, self.max_length_sentence], name='reg_ids')  # batch x mat_len_sent
 
         self.sentence_length = tf.placeholder(dtype=tf.int32, shape=[None], name='sentence_length')  # bacth
-        self.word_length = tf.placeholder(dtype=tf.int32, shape=[None, None],
+        self.word_length = tf.placeholder(dtype=tf.int32, shape=[None, self.max_length_sentence],
                                           name='word_length')  # batch x max_len_sent
 
-        self.labels = tf.placeholder(dtype=tf.int32, shape=[None, None], name='labels')
+        self.labels = tf.placeholder(dtype=tf.int32, shape=[None, self.max_length_sentence], name='labels')
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.is_training = tf.placeholder(dtype=tf.bool, shape=[], name="is_training")
 
@@ -104,7 +109,8 @@ class NERModel:
                                cells=None, mode='character', scope='char_bidirection')
 
         def char_cnn():
-            raise NotImplemented()
+            return build_charCNN(input=self.char_enc,filter_sizes=self.filter_sizes,num_filter=self.num_filter,
+                                 scope='char_cnn')
 
         if self.nn_for_char == 'bilstm':
             word_from_char = char_bilstm()
@@ -151,9 +157,9 @@ class NERModel:
             raise Exception('Optimizer method not be included yet')
 
         if self.clip > 0:
-            grads, vars = zip(*optimizer.compute_gradients(self.train_loss))
+            grads, vars = list(zip(*optimizer.compute_gradients(self.train_loss)))
             clipped_grads, _ = tf.clip_by_global_norm(grads, self.clip)
-            self.train_op = optimizer.apply_gradients(zip(clipped_grads, vars))
+            self.train_op = optimizer.apply_gradients(list(zip(clipped_grads, vars)))
         else:
             self.train_op = optimizer.minimize(self.train_loss)
 
@@ -193,10 +199,14 @@ class NERModel:
         return tf.reshape(a, shape=(s[0], s[1], out_dim)) if len(s_lst) > 2 else a
 
     def __build_summary(self):
-        tf.summary.scalar("loss", self.train_loss)
+        #### LOSS #####
+        # build general loss (because for training phase we need train_loss and otherwise eval_loss.)
+        mode = tf.cast(self.is_training,dtype=tf.float32) # is training or evaling
+        loss = mode * (self.train_loss) + (1 - mode)*self.eval_loss
+
+        tf.summary.scalar("loss", loss)
+
         self.merged = tf.summary.merge_all()
-        self.train_writer = tf.summary.FileWriter(self.dir_summary + '/train', self.sess.graph)
-        self.eval_writer = tf.summary.FileWriter(self.dir_summary + '/test')
 
     def build(self):
         with tf.variable_scope('embedding'):
@@ -209,30 +219,32 @@ class NERModel:
             self.fn_word_enc = batch_norm_layer(self.fn_word_enc, training=self.is_training, name='bach_norm_word')
             self.fn_word_enc = tf.nn.dropout(self.fn_word_enc, keep_prob=self.dropout)
 
-        with tf.variable_scope('bi_lstm'):
+        with tf.variable_scope('attention_bi_lstm'):
             #
             # apply two bi-LSTM for word representation, then dropout some units
             #
             self.fn_w_v1 = build_biRNN(input=self.fn_word_enc, hid_dim=self.word_hid_dim, is_training=self.is_training,
                                        sequence_length=self.sentence_length, cells=None, mode='other',
-                                       scope='word_bidirection_lstm_v1', use_zoneout=self.use_zoneout,
-                                       use_bnlstm=self.use_bn_recurrent)
+                                       scope='word_bidirection_lstm_v1')
 
             self.fn_w_v1 = batch_norm_layer(self.fn_w_v1, training=self.is_training, name='batch_norm_lstm1')
 
-            '''
+
             self.fn_w_v2 = build_biRNN(input=self.fn_w_v1, hid_dim=self.word_hid_dim, is_training=self.is_training,
                                        sequence_length=self.sentence_length,cells=None, mode='other',
-                                       scope='word_bidirection_lstm_v2', use_zoneout=self.use_zoneout, use_bnlstm=self.use_bn_recurrent)
+                                       scope='word_bidirection_lstm_v2')
+
             '''
             # Note that: Attention consumes so much memory and computation, so i decided to decrease word hidden embedding from 100 downto 50.
             # But it still take about 2 hours to finish training phase (~1000 samples).
             # If you don't wanna use this, so turn word hidden embedding back to 100, because this is the best value i found for previous configs.
             self.fn_w_v2 = build_selfAttention(input=self.fn_w_v1, hid_dim=2 * self.word_hid_dim,
                                                sequence_length=self.sentence_length, scope='self_attention')
+            '''
+        #self.fn_output = batch_norm_layer(self.fn_w_v2, training=self.is_training, name='batch_norm_lstm2')
 
-            #self.fn_output = batch_norm_layer(self.fn_w_v2, training=self.is_training, name='batch_norm_lstm2')
-            self.fn_output = self.fn_w_v2
+        self.fn_output = self.fn_w_v2 #self.fn_w_v2
+
         with tf.variable_scope('fully_connected'):
             #
             # fully connected layer to project from (2 x word_hid_dim) shape to (n_tag)
@@ -261,8 +273,6 @@ class NERModel:
         # Build session
         #
         self.sess = tf.Session()
-        init_op = tf.global_variables_initializer()
-        self.sess.run(init_op)
 
         #
         # Build summary
@@ -270,30 +280,32 @@ class NERModel:
         self.__build_summary()
 
     def __create_feed_dict(self, batch, use_label=True):
-        max_sentence_length = max(map(lambda x: len(x), [e['word_ids'] for e in batch]))
+        max_length_sentence = self.max_length_sentence # max(map(lambda x: len(x), [e['word_ids'] for e in batch]))
+        max_length_word = self.max_length_word
 
-        ip_char_ids, word_length = pad_char(sequences=[e['char_ids'] for e in batch], pad_tok=0)
+        ip_char_ids, word_length = pad_char(sequences=[e['char_ids'] for e in batch], pad_tok=0,
+                                            max_length_word=max_length_word, max_length_sentence=max_length_sentence)
         ip_word_ids, sentence_length = pad_common(sequences=[e['word_ids'] for e in batch], pad_tok=0,
-                                                  max_length=max_sentence_length)
+                                                  max_length=max_length_sentence)
 
         res = {
             self.char_ids: ip_char_ids,
             self.word_ids: ip_word_ids,
             self.cap_ids:
-                pad_common(sequences=[e['cap_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0],
+                pad_common(sequences=[e['cap_ids'] for e in batch], pad_tok=0, max_length=max_length_sentence)[0],
             self.pos_ids:
-                pad_common(sequences=[e['pos_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0],
+                pad_common(sequences=[e['pos_ids'] for e in batch], pad_tok=0, max_length=max_length_sentence)[0],
             self.sentence_length: sentence_length,
             self.word_length: word_length,
         }
 
         if use_label:
             res[self.labels] = \
-                pad_common(sequences=[e['label_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0]
+                pad_common(sequences=[e['label_ids'] for e in batch], pad_tok=0, max_length=max_length_sentence)[0]
 
         if self.id2reg != None:
             res[self.reg_ids] = \
-                pad_common(sequences=[e['reg_ids'] for e in batch], pad_tok=0, max_length=max_sentence_length)[0]
+                pad_common(sequences=[e['reg_ids'] for e in batch], pad_tok=0, max_length=max_length_sentence)[0]
 
         return res
 
@@ -312,26 +324,39 @@ class NERModel:
 
             out = loss
 
-        elif mode == 'eval':
+        elif mode == 'test':
             ip_feed_dict[self.is_training] = False
             ip_feed_dict[self.dropout] = 1.0
 
-            loss, scores, transition, summary = self.sess.run(
-                [self.eval_loss, self.fn_scores, self.transition, self.merged],
-                feed_dict=ip_feed_dict)
+            scores, transition, summary = self.sess.run( [self.fn_scores, self.transition, self.merged],
+                                                        feed_dict=ip_feed_dict)
             predict_labels, _ = crf_decode_with_batch(scores=scores, sentence_lengths=sentece_lengths,
                                                       transition=transition)
 
             if i % self.freq_equal_summary == 0:
-                self.eval_writer.add_summary(summary, i)
+                self.test_writer.add_summary(summary, i)
 
             out = predict_labels
 
         return out
 
+    def reset_graph(self):
+        init_op = tf.global_variables_initializer()
+        self.sess.run(init_op)
+
     def close_writer(self):
         self.train_writer.close()
-        self.eval_writer.close()
+        self.test_writer.close()
+
+    def reset_dir_summary(self,dir_summary):
+        self.dir_summary = dir_summary
+
+        if tf.gfile.Exists(self.dir_summary):
+            tf.gfile.DeleteRecursively(self.dir_summary)
+        tf.gfile.MakeDirs(self.dir_summary)
+
+        self.train_writer = tf.summary.FileWriter(self.dir_summary + '/train', self.sess.graph)
+        self.test_writer = tf.summary.FileWriter(self.dir_summary + '/test')
 
 
 if __name__ == '__main__':

@@ -46,7 +46,7 @@ class Data_component(Component):
         raw_data['pos'] = poss
 
         # We just be allowed to get information from training data only
-        train_data = {name:val[:split_id] for name,val in raw_data.iteritems()}
+        train_data = {name:val[:split_id] for name,val in raw_data.items()}
 
         _, id2word, word2id    = word_mapping(lst_sentence=self.lower_all(train_data['sentence']),pre_emb=word2vec_path)
         _, id2char, char2id    = char_mapping(lst_sentence=self.lower_all(train_data['sentence']))
@@ -100,9 +100,9 @@ class Data_component(Component):
 
         token = token.strip()
 
-        token = u'<number>' if token.isdigit() else token
-        token = u'<punct>' if token in ['!', '?', ',', ':', ';'] else token
-        token = u'<date>' if valid_date(token) else token
+        token = '<number>' if token.isdigit() else token
+        token = '<punct>' if token in ['!', '?', ',', ':', ';'] else token
+        token = '<date>' if valid_date(token) else token
 
         return token
 
@@ -125,7 +125,7 @@ class Data_component(Component):
         cur_label = []
         cur_pos = []
 
-        print '-- Start loading data from file --'
+        print('-- Start loading data from file --')
 
         for index, row in df.iterrows():
             token = self.normalize_text(row['token'])
@@ -145,7 +145,7 @@ class Data_component(Component):
                 cur_label.append(label)
                 cur_pos.append(pos)
 
-        print '-- Finished loading data --'
-        print ('-- Number of samples: ', len(sents))
+        print('-- Finished loading data --')
+        print(('-- Number of samples: ', len(sents)))
 
         return (sents, labels, poss)

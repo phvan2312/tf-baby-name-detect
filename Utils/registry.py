@@ -1,9 +1,9 @@
 import os
-from Cap.cap_component import Cap_component
-from Regex.reg_component import Reg_component
-from Data.data_component import Data_component
-from Summarizer.sum_component import Sum_component
-from Entity.entity_component import Entity_component
+from .Cap.cap_component import Cap_component
+from .Regex.reg_component import Reg_component
+from .Data.data_component import Data_component
+from .Summarizer.sum_component import Sum_component
+from .Entity.entity_component import Entity_component
 import collections
 
 class Registry:

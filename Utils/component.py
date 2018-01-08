@@ -24,7 +24,7 @@ class Component:
     # Process message
     def process(self,message,config):
         # check required attributes in message
-        print '-- %s start processing.' % self.name
+        print('-- %s start processing.' % self.name)
 
         assert type(message) is dict
         assert type(config) is dict

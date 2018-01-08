@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from gensim.models.keyedvectors import KeyedVectors
-from custom import ZoneoutWrapper, BNLSTMCell, batch_norm, SelfAttention
+from .custom import batch_norm, SelfAttention
 
 def batch_norm_layer(input, training, name='batch_norm'):
     ip_shape = tf.shape(input)
@@ -28,12 +28,12 @@ def load_pretrained_word2vec(emb_size, id2word, pre_emb_path):
 
     # assign
     total_loaded = 0
-    for key, word in id2word.items():
+    for key, word in list(id2word.items()):
         if word in word2vec_model.wv:
             W[key] = word2vec_model.wv[word]
             total_loaded += 1
 
-    print ('-- Total loaded from pretrained:', total_loaded)
+    print(('-- Total loaded from pretrained:', total_loaded))
     return W
 
 def initialize_matrix(shape, mode='xavier', name='embedding'):
@@ -48,11 +48,55 @@ def initialize_matrix(shape, mode='xavier', name='embedding'):
 
     return emb
 
-def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scope='biRNN', use_zoneout=False,
-                is_training=None, use_bnlstm=False):
+def build_charCNN(input, filter_sizes, num_filter, scope):
+    s_lst = input.get_shape().as_list()
+    max_length_sentence = s_lst[1]
+    max_length_word     = s_lst[2]
+    emb_dim             = s_lst[3]
+
+    with tf.variable_scope(scope):
+        input = tf.reshape(input,shape=(-1,max_length_word, emb_dim))
+        input = tf.expand_dims(input,3) # for corresponding with requirements in tensorflow
+
+        pooled_outputs = []
+        for filter_size in filter_sizes:
+            filter_shape = [filter_size,emb_dim,1,num_filter]
+
+            # create variable
+            W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
+            b = tf.Variable(tf.constant(0.1, shape=[num_filter]), name="b")
+
+            conv = tf.nn.conv2d(
+                input,
+                filter=W,
+                strides=[1, 1, 1, 1],
+                padding="VALID",
+                name="conv")
+
+            # Apply nonlinearity
+            h = tf.nn.bias_add(conv, b)  #tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
+
+            # Maxpooling over the outputs
+            pooled = tf.nn.max_pool(
+                h,
+                ksize=[1, max_length_word - filter_size + 1, 1, 1],
+                strides=[1, 1, 1, 1],
+                padding='VALID',
+                name="pool")
+
+            pooled_outputs.append(pooled)
+
+        # Combine all the pooled features
+        num_filters_total = num_filter * len(filter_sizes)
+        h_pool = tf.concat(pooled_outputs, 3)
+        h_pool_flat = tf.reshape(h_pool, [-1, max_length_sentence, num_filters_total])
+
+    return h_pool_flat
+
+def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scope='biRNN', is_training=None):
     s = tf.shape(input=input)
     s_lst = input.get_shape().as_list()
-    fn_input_dim = s_lst[-1]  # this value must exactly be an integer.
+    fn_input_dim = s_lst[-1]  # this value must be an integer.
 
     with tf.variable_scope(scope):
         if cells is not None:
@@ -62,19 +106,8 @@ def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scop
                                               use_peepholes=True)
             cell_bw = tf.contrib.rnn.LSTMCell(hid_dim, initializer=tf.contrib.layers.xavier_initializer(),
                                               use_peepholes=True)
-            if use_bnlstm:
-                if is_training == None:
-                    raise Exception('Invalid argument is_training (must be True or False)')
-                cell_fw = BNLSTMCell(hid_dim, is_training)
-                cell_bw = BNLSTMCell(hid_dim, is_training)
 
-            if use_zoneout:
-                if is_training == None:
-                    raise Exception('Invalid argument is_training (must be True or False)')
-                cell_fw = ZoneoutWrapper(cell_fw, is_training=is_training)
-                cell_bw = ZoneoutWrapper(cell_bw, is_training=is_training)
-
-        if len(s_lst) > 3:  # for character
+        if len(s_lst) > 3:  # character mode (bi-lstm for character-level)
             input = tf.reshape(input, shape=(s[0] * s[1], s[2], fn_input_dim))
             sequence_length = tf.reshape(sequence_length, shape=(s[0] * s[1],))
 
@@ -89,6 +122,8 @@ def build_biRNN(input, hid_dim, sequence_length, cells=None, mode='normal', scop
 
         return final_output
 
+# build a self-matching attention
+# get intuition from this page:https://yerevann.github.io/2017/08/25/challenges-of-reproducing-r-net-neural-network-using-keras/
 def build_selfAttention(input, hid_dim, sequence_length, scope):
     # self-matching attention
     with tf.variable_scope(scope):
@@ -105,15 +140,8 @@ def build_selfAttention(input, hid_dim, sequence_length, scope):
         }
 
         cell_fw = SelfAttention(num_units=hid_dim,memory=input,params=params)
-        '''
-        cell_bw = SelfAttention(num_units=hid_dim,memory=input,params=params)
-
-        output, _ = tf.nn.bidirectional_dynamic_rnn(cell_fw=cell_fw, cell_bw=cell_bw, inputs=input,
-                                                        sequence_length=sequence_length, dtype=tf.float32)
-
-        return tf.concat(output,2)
-        '''
         output, _  = tf.nn.dynamic_rnn(cell=cell_fw,inputs=input,sequence_length=sequence_length,dtype=tf.float32)
+
         return output
 
 # params sentence_lengths contain integer value which is actual
@@ -153,7 +181,7 @@ def pad_common(sequences, pad_tok, max_length):
 
 # code from : https://github.com/guillaumegenthial/sequence_tagging
 # original method name : pad_sequence
-def pad_char(sequences, pad_tok):
+def pad_char(sequences, pad_tok, max_length_word, max_length_sentence):
     """
     Args:
         sequences: a generator of list or tuple
@@ -164,7 +192,7 @@ def pad_char(sequences, pad_tok):
         a list of list where each sublist has same length
 
     """
-    max_length_word = max([max(map(lambda x: len(x), seq)) for seq in sequences])
+    #max_length_word = max([max(map(lambda x: len(x), seq)) for seq in sequences])
     sequence_padded, sequence_length = [], []
 
     for seq in sequences:
@@ -173,10 +201,8 @@ def pad_char(sequences, pad_tok):
         sequence_padded += [sp]
         sequence_length += [sl]
 
-    max_length_sentence = max(map(lambda x: len(x), sequences))
-    sequence_padded, _ = pad_common(sequence_padded,
-                                    [pad_tok] * max_length_word, max_length_sentence)
-    sequence_length, _ = pad_common(sequence_length, 0,
-                                    max_length_sentence)
+    #max_length_sentence = max(map(lambda x: len(x), sequences))
+    sequence_padded, _ = pad_common(sequence_padded, [pad_tok] * max_length_word, max_length_sentence)
+    sequence_length, _ = pad_common(sequence_length, 0, max_length_sentence)
 
     return sequence_padded, sequence_length

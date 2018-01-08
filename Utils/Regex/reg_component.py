@@ -1,5 +1,5 @@
 from Utils.component import Component
-from regmatcher import RegexMatcher
+from .regmatcher import RegexMatcher
 from Utils.utils import common_mapping
 
 class Reg_component(Component):

@@ -25,7 +25,7 @@ def mapping(dico):
     assert type(dico) is dict
 
     # sort item by descending its value (frequency of word)
-    sorted_items = sorted(dico.items(),key=lambda elem: -elem[1])
+    sorted_items = sorted(list(dico.items()),key=lambda elem: -elem[1])
     id2item = {i:v[0] for i,v in enumerate(sorted_items)}
     item2id = {v[0]:i for i,v in enumerate(sorted_items)}
 
@@ -43,7 +43,7 @@ def word_mapping(lst_sentence,pre_emb=''):
 
     if pre_emb != '':
         word2vec_model = KeyedVectors.load_word2vec_format(pre_emb,binary=True)
-        vocabs = word2vec_model.wv.vocab.keys()
+        vocabs = list(word2vec_model.wv.vocab.keys())
         for word in vocabs:
             if word not in dict_word:
                 dict_word[word] = 0
@@ -51,9 +51,9 @@ def word_mapping(lst_sentence,pre_emb=''):
 
     id2word,word2id = mapping(dict_word)
 
-    print "Found %i unique words (%i in total)" % (
+    print("Found %i unique words (%i in total)" % (
         len(dict_word), sum(len(x) for x in lst_sentence)
-    )
+    ))
 
     return dict_word,id2word,word2id
 
@@ -69,7 +69,7 @@ def char_mapping(lst_sentence):
 
     id2char,char2id = mapping(dict_char)
 
-    print "Found %i unique characters" % len(dict_char)
+    print("Found %i unique characters" % len(dict_char))
 
     return dict_char,id2char,char2id
 
@@ -81,7 +81,7 @@ def common_mapping(lst_x,name='x'):
     dict_x = dict_from_list(lst_x)
     id2x,x2id = mapping(dict_x)
 
-    print "Found %i unique %s" % (len(dict_x),name)
+    print("Found %i unique %s" % (len(dict_x),name))
 
     return dict_x,id2x,x2id
 
@@ -89,7 +89,7 @@ def common_mapping(lst_x,name='x'):
 def create_batch(dataset,batch_size):
     batch_datas = []
 
-    pre_batchs  = range(0,len(dataset),batch_size)
+    pre_batchs  = list(range(0,len(dataset),batch_size))
     next_batchs = [(i + batch_size) if (i + batch_size) < len(dataset) else len(dataset) for i in pre_batchs ]
 
     for s_i, e_i in zip(pre_batchs,next_batchs):
