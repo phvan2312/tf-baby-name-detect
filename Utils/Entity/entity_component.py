@@ -115,8 +115,8 @@ class Entity_component(Component):
             'clip' : 1,
             'dir_summary' : dir_summary,
             'pre_emb_path': config['word2vec_path'],
-            'max_length_word': 40,
-            'max_length_sentence': 300
+            'max_length_word': 20,
+            'max_length_sentence': 100
         }
         # build model
         self.model = NERModel(**parameters)
