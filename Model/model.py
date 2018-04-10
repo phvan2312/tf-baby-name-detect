@@ -11,6 +11,7 @@ class NERModel:
                  dir_summary, pre_emb_path,
                  max_length_word, max_length_sentence,
                  filter_sizes, num_filter):
+
         self.id2char = id2char
         self.id2word = id2word
         self.id2label = id2label
@@ -229,18 +230,17 @@ class NERModel:
 
             self.fn_w_v1 = batch_norm_layer(self.fn_w_v1, training=self.is_training, name='batch_norm_lstm1')
 
+            # self.fn_w_v2 = build_biRNN(input=self.fn_w_v1, hid_dim=self.word_hid_dim, is_training=self.is_training,
+            #                            sequence_length=self.sentence_length,cells=None, mode='other',
+            #                            scope='word_bidirection_lstm_v2')
 
-            self.fn_w_v2 = build_biRNN(input=self.fn_w_v1, hid_dim=self.word_hid_dim, is_training=self.is_training,
-                                       sequence_length=self.sentence_length,cells=None, mode='other',
-                                       scope='word_bidirection_lstm_v2')
 
-            '''
             # Note that: Attention consumes so much memory and computation, so i decided to decrease word hidden embedding from 100 downto 50.
             # But it still take about 2 hours to finish training phase (~1000 samples).
             # If you don't wanna use this, so turn word hidden embedding back to 100, because this is the best value i found for previous configs.
             self.fn_w_v2 = build_selfAttention(input=self.fn_w_v1, hid_dim=2 * self.word_hid_dim,
                                                sequence_length=self.sentence_length, scope='self_attention')
-            '''
+
         #self.fn_output = batch_norm_layer(self.fn_w_v2, training=self.is_training, name='batch_norm_lstm2')
 
         self.fn_output = self.fn_w_v2 #self.fn_w_v2
@@ -272,7 +272,10 @@ class NERModel:
         #
         # Build session
         #
-        self.sess = tf.Session()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+
+        self.sess = tf.Session(config=config)
 
         #
         # Build summary

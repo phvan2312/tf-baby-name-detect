@@ -31,7 +31,10 @@ class F1Summary:
             tf.summary.scalar('f1_total', self.f1_total)
 
             self.merged = tf.summary.merge_all()
-            self.sess = tf.Session()
+
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
+            self.sess = tf.Session(config=config)
 
             self.train_writer = tf.summary.FileWriter(self.dir_summary + '/train')
             self.test_writer = tf.summary.FileWriter(self.dir_summary + '/test')
@@ -102,7 +105,7 @@ class Entity_component(Component):
             'pos_emb_dim'  : 10,
             'reg_emb_dim'  : 5,
             'char_hid_dim' : 20,
-            'word_hid_dim' : 100,
+            'word_hid_dim' : 50,
             'nn_for_char'  : 'cnn', # must be 'bilstm' or 'cnn'
             'filter_sizes' : [2,3,4,5,6],
             'num_filter'   : 20,
