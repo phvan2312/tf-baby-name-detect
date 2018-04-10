@@ -137,7 +137,7 @@ class Entity_component(Component):
             self.model.reset_dir_summary(dir_summary + '/fold_%i/loss' % fold_id)
             f1_summary.reset(dir_summary + '/fold_%i/f1' % fold_id)
 
-            print ('##########################')
+            print ('###########################')
             print ('### start training, with fold %i' % fold_id)
             print ('# all variables of model must be reinitialized ...')
 
