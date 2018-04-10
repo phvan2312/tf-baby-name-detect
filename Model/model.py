@@ -12,6 +12,8 @@ class NERModel:
                  max_length_word, max_length_sentence,
                  filter_sizes, num_filter):
 
+        tf.reset_default_graph()
+
         self.id2char = id2char
         self.id2word = id2word
         self.id2label = id2label
@@ -64,6 +66,8 @@ class NERModel:
         self.labels = tf.placeholder(dtype=tf.int32, shape=[None, self.max_length_sentence], name='labels')
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.is_training = tf.placeholder(dtype=tf.bool, shape=[], name="is_training")
+
+        self.lr_placeholder = tf.placeholder_with_default(input=self.lr,shape=[],name='lr')
 
     def __build_word_input(self):
         #
@@ -145,15 +149,15 @@ class NERModel:
 
     def __build_optimizer(self):
         if self.optimize_method == 'adam':
-            optimizer = tf.train.AdamOptimizer(self.lr)
+            optimizer = tf.train.AdamOptimizer(self.lr_placeholder)
         elif self.optimize_method == 'sgd':
-            optimizer = tf.train.GradientDescentOptimizer(self.lr)
+            optimizer = tf.train.GradientDescentOptimizer(self.lr_placeholder)
         elif self.optimize_method == 'adadelta':
-            optimizer = tf.train.AdadeltaOptimizer(self.lr)
+            optimizer = tf.train.AdadeltaOptimizer(self.lr_placeholder)
         elif self.optimize_method == 'adagrad':
-            optimizer = tf.train.AdagradOptimizer(self.lr)
+            optimizer = tf.train.AdagradOptimizer(self.lr_placeholder)
         elif self.optimize_method == 'rmsprop':
-            optimizer = tf.train.RMSPropOptimizer(self.lr)
+            optimizer = tf.train.RMSPropOptimizer(self.lr_placeholder)
         else:
             raise Exception('Optimizer method not be included yet')
 
@@ -312,8 +316,10 @@ class NERModel:
 
         return res
 
-    def batch_run(self, batch, i, mode='train'):
+    def batch_run(self, batch, i, mode='train',lr = None):
         ip_feed_dict = self.__create_feed_dict(batch)
+        if lr != None: ip_feed_dict[self.lr_placeholder] = lr
+
         sentece_lengths = ip_feed_dict[self.sentence_length]
 
         if mode == 'train':

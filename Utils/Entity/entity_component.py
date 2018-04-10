@@ -109,14 +109,14 @@ class Entity_component(Component):
             'nn_for_char'  : 'cnn', # must be 'bilstm' or 'cnn'
             'filter_sizes' : [2,3,4,5,6],
             'num_filter'   : 20,
-            'dropout_prob' : 0.5,
-            'lr' : .002,
-            'optimize_method' : 'adam',
+            'dropout_prob' : 0.6,
+            'lr' : .005,
+            'optimize_method' : 'rmsprop',
             'clip' : 1,
             'dir_summary' : dir_summary,
             'pre_emb_path': config['word2vec_path'],
-            'max_length_word': 40,
-            'max_length_sentence': 300
+            'max_length_word': 20,
+            'max_length_sentence': 100
         }
         # build model
         self.model = NERModel(**parameters)
@@ -146,16 +146,24 @@ class Entity_component(Component):
             train_i, eval_ti = 0, 0
             n_labels = len(id2label)
 
+            init_lr = self.model.lr
+            decay_lr_every = 50
+            lr_decay = 0.9
+
             best_test = -np.inf
 
             for epoch in range(nepochs):
                 for i, batch_id in enumerate(np.random.permutation(len(train_batch))):
                     batch = train_batch[batch_id]
 
-                    loss = self.model.batch_run(batch=batch, i=train_i, mode='train')
+                    loss = self.model.batch_run(batch=batch, i=train_i, mode='train',lr=init_lr)
                     train_i += 1
 
-                    print('-- fold %i, epoch %i, batch %i has loss %f' % (fold_id, epoch, i, loss))
+                    if train_i % decay_lr_every == 0:
+                        init_lr *= lr_decay
+                        print ('new lr: %f' % init_lr)
+
+                    #print('-- fold %i, epoch %i, batch %i has loss %f' % (fold_id, epoch, i, loss))
                     # caculate test/dev set
                     if i % freq_eval == 0:
                         print ('scoring for test ...')
