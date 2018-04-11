@@ -39,7 +39,8 @@ def word_mapping(lst_sentence,pre_emb=''):
 
     # get dict of words
     dict_word = dict_from_list(lst_sentence)
-    dict_word['<unk>'] = 10000
+    dict_word['<pad>'] = np.max(dict_word.values()) + 1
+    dict_word['<unk>'] = np.max(dict_word.values()) + 1
 
     if pre_emb != '':
         word2vec_model = KeyedVectors.load_word2vec_format(pre_emb,binary=True)
@@ -65,7 +66,8 @@ def char_mapping(lst_sentence):
 
     # get dict of characters
     dict_char = dict_from_list(lst_sentence_by_char)
-    dict_char['<unk>'] = 10000
+    dict_char['<pad>'] = np.max(dict_char.values()) + 1
+    dict_char['<unk>'] = np.max(dict_char.values()) + 1
 
     id2char,char2id = mapping(dict_char)
 
@@ -79,6 +81,7 @@ def common_mapping(lst_x,name='x'):
     assert type(lst_x) is list
 
     dict_x = dict_from_list(lst_x)
+
     id2x,x2id = mapping(dict_x)
 
     print("Found %i unique %s" % (len(dict_x),name))

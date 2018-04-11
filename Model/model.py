@@ -102,7 +102,7 @@ class NERModel:
             self.reg_enc = tf.nn.embedding_lookup(self.REG_EMB, self.reg_ids)
             features.append(self.reg_enc)
 
-        self.fn_word_enc = tf.concat(features, axis=2)
+        self.fn_word_enc = tf.concat([self.word_enc,self.cap_enc], axis=2)
 
     # Build word representation from character level
     # We have two approach:
@@ -290,9 +290,9 @@ class NERModel:
         max_length_sentence = self.max_length_sentence # max(map(lambda x: len(x), [e['word_ids'] for e in batch]))
         max_length_word = self.max_length_word
 
-        ip_char_ids, word_length = pad_char(sequences=[e['char_ids'] for e in batch], pad_tok=0,
+        ip_char_ids, word_length = pad_char(sequences=[e['char_ids'] for e in batch], pad_tok=1,
                                             max_length_word=max_length_word, max_length_sentence=max_length_sentence)
-        ip_word_ids, sentence_length = pad_common(sequences=[e['word_ids'] for e in batch], pad_tok=0,
+        ip_word_ids, sentence_length = pad_common(sequences=[e['word_ids'] for e in batch], pad_tok=1,
                                                   max_length=max_length_sentence)
 
         res = {
@@ -301,7 +301,7 @@ class NERModel:
             self.cap_ids:
                 pad_common(sequences=[e['cap_ids'] for e in batch], pad_tok=0, max_length=max_length_sentence)[0],
             self.pos_ids:
-                pad_common(sequences=[e['pos_ids'] for e in batch], pad_tok=0, max_length=max_length_sentence)[0],
+                pad_common(sequences=[e['pos_ids'] for e in batch], pad_tok=1, max_length=max_length_sentence)[0],
             self.sentence_length: sentence_length,
             self.word_length: word_length,
         }
@@ -318,7 +318,8 @@ class NERModel:
 
     def batch_run(self, batch, i, mode='train',lr = None):
         ip_feed_dict = self.__create_feed_dict(batch)
-        if lr != None: ip_feed_dict[self.lr_placeholder] = lr
+        if lr != None:
+            ip_feed_dict[self.lr_placeholder] = lr
 
         sentece_lengths = ip_feed_dict[self.sentence_length]
 

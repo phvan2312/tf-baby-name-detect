@@ -31,23 +31,24 @@ class Cap_component(Component):
             caps.append(_caps)
 
         message['ids']['cap_ids']= caps
-        message['dictionary']['id2cap'] = {i:str(i) for i in range(4)}
+        message['dictionary']['id2cap'] = {i:str(i) for i in range(5)}
 
     def __cap_feature(self,s):
         """
         Capitalization feature:
-        0 = low caps
-        1 = all caps
-        2 = first letter caps
-        3 = one capital (not first letter)
+        0 = padding
+        1 = low caps
+        2 = all caps
+        3 = first letter caps
+        4 = one capital (not first letter)
         """
         if s.lower() == s:
-            return 0
-        elif s.upper() == s:
             return 1
-        elif s[0].upper() == s[0]:
+        elif s.upper() == s:
             return 2
-        else:
+        elif s[0].upper() == s[0]:
             return 3
+        else:
+            return 4
 
 

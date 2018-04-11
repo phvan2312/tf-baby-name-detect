@@ -10,6 +10,7 @@ flags.DEFINE_float('test_size',.2,'% of test size')
 flags.DEFINE_integer('epochs',30,'number of epochs')
 flags.DEFINE_integer('freq_eval',20,'number of batch passed to evaluate test set')
 flags.DEFINE_boolean('use_regex',True,'use regular expression or not')
+
 flags.DEFINE_integer('batch_size',25,'number of samples per batch')
 
 FLAGS = tf.app.flags.FLAGS

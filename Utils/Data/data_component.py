@@ -51,7 +51,7 @@ class Data_component(Component):
         _, id2word, word2id    = word_mapping(lst_sentence=self.lower_all(train_data['sentence']),pre_emb=word2vec_path)
         _, id2char, char2id    = char_mapping(lst_sentence=self.lower_all(train_data['sentence']))
         _, id2label, label2id  = common_mapping(lst_x=train_data['label'],name='label')
-        _, id2pos, pos2id      = common_mapping(lst_x=train_data['pos'],name='pos')
+        _, id2pos, pos2id      = word_mapping(lst_sentence=train_data['pos'])
 
         word_ids  = []
         char_ids  = []
