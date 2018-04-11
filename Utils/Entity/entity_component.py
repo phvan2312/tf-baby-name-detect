@@ -111,7 +111,7 @@ class Entity_component(Component):
             'num_filter'   : 20,
             'dropout_prob' : 0.5,
             'lr' : .002,
-            'optimize_method' : 'adam',
+            'optimize_method' : 'rmsprop',
             'clip' : 1,
             'dir_summary' : dir_summary,
             'pre_emb_path': config['word2vec_path'],
