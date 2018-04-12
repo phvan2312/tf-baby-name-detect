@@ -1,6 +1,6 @@
-from Utils.component import Component
+from Components.component import Component
 from .regmatcher import RegexMatcher
-from Utils.utils import common_mapping
+from Components.utils import label_mapping
 
 class Reg_component(Component):
     name = 'reg_extractor'
@@ -33,7 +33,7 @@ class Reg_component(Component):
             _regs = self.regex_matcher.annotate_name(_tokens)
             regs.append(_regs)
 
-        _,id2reg,_ = common_mapping(regs,'regex')
+        _,id2reg,_ = label_mapping(regs, 'regex')
 
         message['ids']['reg_ids']=regs
         message['dictionary']['id2reg'] = id2reg

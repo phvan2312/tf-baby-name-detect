@@ -1,8 +1,4 @@
-import pandas as pd
 import numpy as np
-from dateutil.parser import parse
-import os.path
-import codecs
 from gensim.models.keyedvectors import KeyedVectors
 
 # create dictionary from list
@@ -77,7 +73,7 @@ def char_mapping(lst_sentence):
 
 # similar to word_mapping,char_mapping
 # but now for other type instead
-def common_mapping(lst_x,name='x'):
+def label_mapping(lst_x, name='x'):
     assert type(lst_x) is list
 
     dict_x = dict_from_list(lst_x)
@@ -100,3 +96,5 @@ def create_batch(dataset,batch_size):
             batch_datas.append(dataset[s_i:e_i])
 
     return batch_datas
+
+

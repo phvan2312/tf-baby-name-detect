@@ -1,4 +1,4 @@
-from Utils.component import Component
+from Components.component import Component
 
 class Cap_component(Component):
     name = 'cap_extractor'

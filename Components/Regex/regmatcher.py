@@ -13,7 +13,7 @@ class RegexMatcher:
 
     def load_negative_name(self):
         neg_names = []
-        for line in open('./Utils/Regex/negative_name.csv', 'r'):
+        for line in open('./Components/Regex/negative_name.csv', 'r'):
             neg_names.append(line.strip())
 
         r_neg_name = r'(\d+|' + '|'.join(neg_names) + r')'

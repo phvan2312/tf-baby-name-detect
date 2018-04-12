@@ -1,4 +1,4 @@
-from Utils.component import Component
+from Components.component import Component
 import os
 
 class Sum_component(Component):

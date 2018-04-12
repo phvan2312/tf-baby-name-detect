@@ -1,8 +1,8 @@
-from Utils.component import Component
+from Components.component import Component
 import os
 import pandas as pd
 from dateutil.parser import parse
-from Utils.utils import word_mapping,char_mapping,common_mapping
+from Components.utils import word_mapping,char_mapping,label_mapping
 
 class Data_component(Component):
     name = 'data_extractor'
@@ -55,7 +55,7 @@ class Data_component(Component):
 
         _, id2word, word2id    = word_mapping(lst_sentence=self.lower_all(train_sents),pre_emb=word2vec_path)
         _, id2char, char2id    = char_mapping(lst_sentence=self.lower_all(train_sents))
-        _, id2label, label2id  = common_mapping(lst_x=train_labels,name='label')
+        _, id2label, label2id  = label_mapping(lst_x=train_labels, name='label')
         _, id2pos, pos2id      = word_mapping(lst_sentence=train_poss)
 
         word_ids  = []
@@ -119,16 +119,9 @@ class Data_component(Component):
         df = pd.read_csv(path_to_file,encoding='utf-8')
         df.dropna(inplace=True)
 
-        start_post = '['
-        end_post = ']'
-
-        sents = []
-        labels = []
-        poss = []
-
-        cur_sent = []
-        cur_label = []
-        cur_pos = []
+        start_post, end_post = '[', ']'
+        sents, labels, poss = [], [], []
+        cur_sent, cur_label, cur_pos = [], [], []
 
         print('-- Start loading data from file --')
 
@@ -142,15 +135,13 @@ class Data_component(Component):
                     sents.append(cur_sent)
                     labels.append(cur_label)
                     poss.append(cur_pos)
-                cur_sent = []
-                cur_label = []
-                cur_pos = []
+                cur_sent, cur_label, cur_pos = [], [], []
             else:
                 cur_sent.append(token)
                 cur_label.append(label)
                 cur_pos.append(pos)
 
         print('-- Finished loading data --')
-        print(('-- Number of samples: ', len(sents)))
+        print('-- Number of samples: ', len(sents))
 
         return (sents, labels, poss)

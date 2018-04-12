@@ -1,16 +1,16 @@
 import tensorflow as tf
-import os, json
-from Utils.registry import Registry
+import os, json, datetime, shutil
+from Components.registry import Registry
 
 flags = tf.app.flags
 
 flags.DEFINE_string('word2vec_path','./Data/Word2vec/43k_word2vec.bin','path for storing word representation (.bin only)')
-flags.DEFINE_string('train_data_path','./Data/Train/train.csv','path for training phase')
-flags.DEFINE_string('test_data_path','./Data/Train/test.csv','path for testing phase')
-flags.DEFINE_integer('epochs',30,'number of epochs')
+flags.DEFINE_string('train_data_path','./Data/Train/fold_0/train.csv','path for training phase')
+flags.DEFINE_string('test_data_path','./Data/Train/fold_0/test.csv','path for testing phase')
+flags.DEFINE_integer('epochs',1,'number of epochs')
 flags.DEFINE_integer('freq_eval',20,'number of batch passed to evaluate test set')
 flags.DEFINE_string('model_params_path','./model_params.json','model parameters path')
-flags.DEFINE_integer('batch_size',25,'number of samples per batch')
+flags.DEFINE_integer('batch_size',35,'number of samples per batch')
 flags.DEFINE_string('saved_result_path','./Results','folder for saving result')
 
 FLAGS = tf.app.flags.FLAGS
@@ -26,10 +26,10 @@ def build_config():
     if config['word2vec_path'] != '': assert os.path.isfile(config['word2vec_path'])
 
     config['train_data_path'] = FLAGS.train_data_path
-    assert os.path.isfile(config['data_path'])
+    assert os.path.isfile(config['train_data_path'])
 
     config['test_data_path'] = FLAGS.test_data_path
-    assert os.path.isfile(config['test_path'])
+    assert os.path.isfile(config['test_data_path'])
 
     config['epochs'] = FLAGS.epochs
     assert config['epochs'] > 0
@@ -42,6 +42,17 @@ def build_config():
 
     assert os.path.isfile(FLAGS.model_params_path)
     config['model_params'] = json.load(open(FLAGS.model_params_path,'r'))
+
+    assert os.path.isdir(FLAGS.saved_result_path)
+    config['saved_result_path'] = os.path.join(FLAGS.saved_result_path, str(datetime.datetime.now()).replace(' ','_') )
+
+    """
+    save some necessary materials in new folder.
+    """
+    if os.path.isdir(config['saved_result_path']): shutil.rmtree(config['saved_result_path'])
+    os.mkdir(config['saved_result_path'])
+
+    json.dump(config['model_params'], open(os.path.join(config['saved_result_path'],'model_params.json'),'w'))
 
     return config
 

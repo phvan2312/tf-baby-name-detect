@@ -1,12 +1,11 @@
-from Utils.component import Component
+from Components.component import Component
 from Model.model import NERModel
-from Utils.utils import create_batch
+from Components.utils import create_batch
 import numpy as np
 import os
 import codecs
 import tensorflow as tf
 
-dir_summary = 'Summary'
 max_fold = 3
 
 class F1Summary:
@@ -93,6 +92,7 @@ class Entity_component(Component):
         building parameters
         """
         dict = message['dictionary']
+        dir_summary = os.path.join(config['saved_result_path'], 'Summary')
         f1_summary = F1Summary(dir_summary)
 
         parameters = {
@@ -225,7 +225,7 @@ class Entity_component(Component):
         """
         for k,v in result_from_folds.items():
             path = os.path.join(config['saved_result_path'], "%s.txt" % k)
-            with open(path,'w') as f: f.write(path)
+            with open(path,'w') as f: f.write(v)
 
         self.model.close_writer()
 
