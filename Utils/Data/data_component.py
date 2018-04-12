@@ -32,12 +32,17 @@ class Data_component(Component):
         Component.process(self,message,config)
 
         # Get absolute path & load file
-        data_path = config.get('data_path')
+        train_data_path = config.get('train_data_path')
+        test_data_path  = config.get('test_data_path')
         word2vec_path = config.get('word2vec_path','')
-        test_size = config.get('test_size',.2)
 
-        sents, labels, poss = self.load_file(data_path)
-        split_id = int(len(sents) * (1 - test_size))
+        train_sents, train_labels, train_poss = self.load_file(train_data_path)
+        print ('-- finished loading training dataset with %d samples' % len(train_sents))
+
+        test_sents, test_labels, test_poss = self.load_file(test_data_path)
+        print ('-- finished loading testing dataset with %d samples' % len(test_sents))
+
+        sents, labels, poss = train_sents + test_sents, train_labels + test_labels, train_poss + test_poss
 
         # for save to mesasge
         raw_data = {}
@@ -46,12 +51,12 @@ class Data_component(Component):
         raw_data['pos'] = poss
 
         # We just be allowed to get information from training data only
-        train_data = {name:val[:split_id] for name,val in raw_data.items()}
+        #train_data = {name:val[:split_id] for name,val in raw_data.items()}
 
-        _, id2word, word2id    = word_mapping(lst_sentence=self.lower_all(train_data['sentence']),pre_emb=word2vec_path)
-        _, id2char, char2id    = char_mapping(lst_sentence=self.lower_all(train_data['sentence']))
-        _, id2label, label2id  = common_mapping(lst_x=train_data['label'],name='label')
-        _, id2pos, pos2id      = word_mapping(lst_sentence=train_data['pos'])
+        _, id2word, word2id    = word_mapping(lst_sentence=self.lower_all(train_sents),pre_emb=word2vec_path)
+        _, id2char, char2id    = char_mapping(lst_sentence=self.lower_all(train_sents))
+        _, id2label, label2id  = common_mapping(lst_x=train_labels,name='label')
+        _, id2pos, pos2id      = word_mapping(lst_sentence=train_poss)
 
         word_ids  = []
         char_ids  = []
@@ -83,10 +88,10 @@ class Data_component(Component):
             'pos_ids'  : pos_ids
         }
 
+        message['split_id'] = len(train_sents)
         message['data'] = raw_data
         message['dictionary'] = dictionary
         message['ids'] = ids
-
 
     # normalize token, convert from its variants to unique one
     def normalize_text(self,token):

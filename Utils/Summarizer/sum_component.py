@@ -24,11 +24,6 @@ class Sum_component(Component):
     def process(self, message, config):
         Component.process(self, message, config)
 
-        use_regex = config.get('use_regex', False)
-        if not use_regex:
-            message['ids']['reg_ids'] = [-1] * len(message['token'])
-            message['dictionary']['id2reg'] = None
-
         dataset = []
         ids = message['ids']
 
@@ -44,11 +39,9 @@ class Sum_component(Component):
             data['cap_ids']   = cap
             data['reg_ids']   = reg
 
-
             dataset.append(data)
 
-        test_size = config.get('test_size', .2)
-        split_id = int(len(dataset) * (1 - test_size))
+        split_id = message['split_id']
         train_data = dataset[:split_id]
         test_data = dataset[split_id:]
 

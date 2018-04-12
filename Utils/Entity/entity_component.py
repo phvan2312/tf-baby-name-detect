@@ -88,55 +88,46 @@ class Entity_component(Component):
     # Process message
     def process(self, message, config):
         Component.process(self, message, config)
+
+        """
+        building parameters
+        """
         dict = message['dictionary']
         f1_summary = F1Summary(dir_summary)
 
         parameters = {
-            'id2char' : dict['id2char'],
-            'id2word' : dict['id2word'],
+            'id2char': dict['id2char'],
+            'id2word': dict['id2word'],
             'id2label': dict['id2label'],
-            'id2pos'  : dict['id2pos'],
-            'id2cap'  : dict['id2cap'],
-            'id2reg'  : dict['id2reg'],
-            'char_emb_dim' : 25, # 25 for bi-lstm is ok
-            'word_emb_dim' : 100, # must be match with pretrained word2vec
-            'cap_emb_dim'  : 10,
-            'pos_emb_dim'  : 10,
-            'reg_emb_dim'  : 5,
-            'char_hid_dim' : 20,
-            'word_hid_dim' : 50,
-            'nn_for_char'  : 'cnn', # must be 'bilstm' or 'cnn'
-            'filter_sizes' : [2,3,4,5,6],
-            'num_filter'   : 20,
-            'dropout_prob' : 0.5,
-            'lr' : .002,
-            'optimize_method' : 'adam',
-            'clip' : 1,
-            'dir_summary' : dir_summary,
-            'pre_emb_path': config['word2vec_path'],
-            'max_length_word': 20,
-            'max_length_sentence': 100,
-            'use_char': 0,
-            'use_pos' : 0,
-            'use_cap' : 1,
-            'use_reg' : 0
+            'id2pos': dict['id2pos'],
+            'id2cap': dict['id2cap'],
+            'id2reg': dict['id2reg'],
+            'dir_summary': dir_summary,
+            'pre_emb_path': config['word2vec_path']
         }
 
-        # build model
+        parameters.update(config['model_params'])
+
+        """
+        building model
+        """
         self.model = NERModel(**parameters)
         self.model.build()
 
-        # create batch
+        """
+        create batchs
+        """
         batch_size = config['batch_size']
         train_dataset, test_dataset = message['dataset']['train'], message['dataset']['test']
         train_batch, test_batch = create_batch(dataset=train_dataset,batch_size=batch_size), \
                                   create_batch(dataset=test_dataset ,batch_size=batch_size)
 
-        result_from_folds = []
+        result_from_folds = {}
 
         for fold_id in range(max_fold):
-            # need to reset model for each fold
-            # reset model, thay doi diem save
+            """
+            reset model for each folds
+            """
             self.model.reset_graph()
             self.model.reset_dir_summary(dir_summary + '/fold_%i/loss' % fold_id)
             f1_summary.reset(dir_summary + '/fold_%i/f1' % fold_id)
@@ -168,15 +159,19 @@ class Entity_component(Component):
                         print ('new lr: %f' % init_lr)
 
                     #print('-- fold %i, epoch %i, batch %i has loss %f' % (fold_id, epoch, i, loss))
-                    # caculate test/dev set
-                    if i % freq_eval == 0:
+
+                    if train_i % freq_eval == 0:
+                        """
+                        calculating score for dev/test set
+                        """
                         print ('scoring for test ...')
 
-                        ########################
-                        ########### FOR TEST SET
                         predictions = []
-                        count = np.zeros((n_labels, n_labels), dtype=np.int32)
+                        conf_matrix = np.zeros((n_labels, n_labels), dtype=np.int32)
 
+                        """
+                        inference
+                        """
                         for t_i, t_batch_id in enumerate(range(len(test_batch))):
                             t_batch = test_batch[t_batch_id]
 
@@ -189,26 +184,49 @@ class Entity_component(Component):
                             batch_y_preds = [[id2label[i] for i in sample] for sample in batch_y_preds]
                             batch_r_preds = [[id2label[i] for i in sample] for sample in batch_r_preds]
 
+                            """
+                            predictions: a list of "<token> <expected_entity> <predict_entity>"
+                            conf_matrix: a confusion matrix
+                            --> both of their variables are used for calculate F1 (using CoNLL script), print result
+                            """
+
                             for (data, y_preds, r_preds) in zip(t_batch, batch_y_preds, batch_r_preds):
                                 for i, (y_pred, r_pred) in enumerate(zip(y_preds, r_preds)):
                                     new_line = " ".join([data['token'][i], r_preds[i], y_preds[i]])
                                     predictions.append(new_line)
-                                    count[label2id[r_pred], label2id[y_pred]] += 1
+                                    conf_matrix[label2id[r_pred], label2id[y_pred]] += 1
                                 predictions.append("")
 
-                        # display result
-                        test_score = self.display_eval_testset(predictions=predictions, conf_matrix=count,
+                        """
+                        get result
+                        """
+                        test_score = self.display_eval_testset(predictions=predictions, conf_matrix=conf_matrix,
                                                                n_labels=n_labels, id2label=id2label,mode='test')
-                        # save f1 summary
+
+                        """
+                        save result for visualizing using tensorboard
+                        """
                         f1_summary.save(f1_age=test_score['f1_age'],f1_name=test_score['f1_name'],
                                         f1_total=test_score['f1_total'], i=eval_ti, mode='test')
 
-                        # save best score
+                        """
+                        save best result
+                        """
                         if test_score['f1_total'] > best_test:
                             best_test = test_score['f1_total']
+
+                            with open(test_score['path'], 'r') as f: best_result = f.read()
+                            result_from_folds['fold_%d' % fold_id] = best_result
+
                             print(('-- New best score on test, ', str(best_test)))
 
-            result_from_folds.append({'best_test':best_test})
+        """
+        close writer
+        """
+        for k,v in result_from_folds.items():
+            path = os.path.join(config['saved_result_path'], "%s.txt" % k)
+            with open(path,'w') as f: f.write(path)
+
         self.model.close_writer()
 
     def display_eval_testset(self,predictions,conf_matrix,n_labels,id2label,mode):
@@ -225,11 +243,12 @@ class Entity_component(Component):
         for line in eval_lines:
             print(line)
 
-        # Confusion matrix with accuracy for each tag
+        # confusion matrix with accuracy for each tag
         print(("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
             "ID", "NE", "Total",
             *([id2label[i] for i in range(n_labels)] + ["Percent"])
         ))
+
         for i in range(n_labels):
             print(("{: >2}{: >7}{: >7}%s{: >9}" % ("{: >7}" * n_labels)).format(
                 str(i), id2label[i], str(conf_matrix[i].sum()),
@@ -237,14 +256,14 @@ class Entity_component(Component):
                   ["%.3f" % (conf_matrix[i][i] * 100. / max(1, conf_matrix[i].sum()))])
             ))
 
-        # Global accuracy
+        # global accuracy
         print("%i/%i (%.5f%%)" % (
             conf_matrix.trace(), conf_matrix.sum(), 100. * conf_matrix.trace() / max(1, conf_matrix.sum())
         ))
 
-        #print (eval_lines)
         return {
             'f1_age'  : float(eval_lines[2].strip().split()[-2]),
             'f1_name' : float(eval_lines[3].strip().split()[-2]),
             'f1_total': float(eval_lines[1].strip().split()[-1]),
+            'path': scores_path
         }
