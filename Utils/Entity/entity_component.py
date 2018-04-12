@@ -42,8 +42,7 @@ class F1Summary:
     def reset(self,dir_summary):
         self.dir_summary = dir_summary
 
-        if tf.gfile.Exists(self.dir_summary):
-            tf.gfile.DeleteRecursively(self.dir_summary)
+        if tf.gfile.Exists(self.dir_summary): tf.gfile.DeleteRecursively(self.dir_summary)
         tf.gfile.MakeDirs(self.dir_summary)
 
         self.train_writer = tf.summary.FileWriter(self.dir_summary + '/train')
@@ -116,8 +115,13 @@ class Entity_component(Component):
             'dir_summary' : dir_summary,
             'pre_emb_path': config['word2vec_path'],
             'max_length_word': 20,
-            'max_length_sentence': 100
+            'max_length_sentence': 100,
+            'use_char': 0,
+            'use_pos' : 0,
+            'use_cap' : 1,
+            'use_reg' : 0
         }
+
         # build model
         self.model = NERModel(**parameters)
         self.model.build()
@@ -237,7 +241,7 @@ class Entity_component(Component):
         print("%i/%i (%.5f%%)" % (
             conf_matrix.trace(), conf_matrix.sum(), 100. * conf_matrix.trace() / max(1, conf_matrix.sum())
         ))
-        
+
         #print (eval_lines)
         return {
             'f1_age'  : float(eval_lines[2].strip().split()[-2]),
