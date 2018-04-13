@@ -11,7 +11,7 @@ class NERModel:
                  dir_summary, pre_emb_path,
                  max_length_word, max_length_sentence,
                  filter_sizes, num_filter,
-                 use_char,use_pos,use_cap,use_reg):
+                 use_char,use_pos,use_cap,use_reg,use_batch_norm,additional_layer):
 
         tf.reset_default_graph()
 
@@ -55,6 +55,10 @@ class NERModel:
         self.use_cap  = use_cap
         self.use_pos  = use_pos
         self.use_reg  = use_reg
+        self.use_batch_norm = use_batch_norm
+
+        self.additional_layer = additional_layer # [attention,bi-lstm,none]
+        assert self.additional_layer in ['attention','bi-lstm','none']
 
     # Build word representation from character level
     # We have two approach:
@@ -118,8 +122,9 @@ class NERModel:
         else:
             self.train_op = optimizer.minimize(self.train_loss)
 
-    def __build_fully_connected(self, in_dim, out_dim, input, activation, name='dense', batch_norm=False,
+    def __build_fully_connected(self, out_dim, input, activation, name='dense', batch_norm=False,
                                 is_training=None):
+        in_dim = input.get_shape().as_list()[-1]
 
         setattr(self, 'W_%s' % name, initialize_matrix(shape=(in_dim, out_dim), name='w1_' + name))
         setattr(self, 'b_%s' % name, initialize_matrix(shape=(out_dim,), name='b_' + name))
@@ -229,7 +234,7 @@ class NERModel:
             """
             apply some regularization terms
             """
-            self.fn_word_enc = batch_norm_layer(self.fn_word_enc, training=self.is_training, name='bach_norm_word')
+            if self.use_batch_norm: self.fn_word_enc = batch_norm_layer(self.fn_word_enc, training=self.is_training, name='bach_norm_word')
             self.fn_word_enc = tf.nn.dropout(self.fn_word_enc, keep_prob=self.dropout)
 
         with tf.variable_scope('attention_bi_lstm'):
@@ -248,12 +253,23 @@ class NERModel:
             # Note that: Attention consumes so much memory and computation, so i decided to decrease word hidden embedding from 100 downto 50.
             # But it still take about 2 hours to finish training phase (~1000 samples).
             # If you don't wanna use this, so turn word hidden embedding back to 100, because this is the best value i found for previous configs.
-            self.fn_w_v2 = build_self_attention(input=self.fn_w_v1, hid_dim=2 * self.word_hid_dim,
+
+            if self.additional_layer == ['attention']:
+                self.fn_output = build_self_attention(input=self.fn_w_v1, hid_dim=2 * self.word_hid_dim,
                                                 sequence_length=self.sentence_length, scope='self_attention')
+            elif self.additional_layer == ['bi-lstm']:
+                self.fn_output = build_bi_rnn(input=self.fn_w_v1, hid_dim=self.word_hid_dim,
+                                           sequence_length=self.sentence_length, cells=None, mode='other',
+                                           scope='word_bidirection_lstm_v2')
+            else:
+                self.fn_output = self.fn_w_v1
+
+            # self.fn_w_v2 = build_self_attention(input=self.fn_w_v1, hid_dim=2 * self.word_hid_dim,
+            #                                     sequence_length=self.sentence_length, scope='self_attention')
 
         #self.fn_output = batch_norm_layer(self.fn_w_v2, training=self.is_training, name='batch_norm_lstm2')
 
-        self.fn_output = self.fn_w_v2 #self.fn_w_v2
+        #self.fn_output = self.fn_w_v2 #self.fn_w_v2
 
         with tf.variable_scope('fully_connected'):
             """
@@ -261,10 +277,8 @@ class NERModel:
             """
             num_label = len(self.id2label)
 
-            tanh_scores = self.__build_fully_connected(in_dim=2 * self.word_hid_dim, out_dim=self.word_hid_dim,
-                                                       input=self.fn_output, activation='tanh', name='dense_v1')
-            self.fn_scores = self.__build_fully_connected(in_dim=self.word_hid_dim, out_dim=num_label,
-                                                          input=tanh_scores, activation=None, name='dense_v2')
+            tanh_scores = self.__build_fully_connected(out_dim=self.word_hid_dim,input=self.fn_output, activation='tanh', name='dense_v1')
+            self.fn_scores = self.__build_fully_connected(out_dim=num_label,input=tanh_scores, activation=None, name='dense_v2')
 
         with tf.variable_scope('sequence_tagging'):
             """

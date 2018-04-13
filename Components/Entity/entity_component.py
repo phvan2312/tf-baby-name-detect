@@ -6,7 +6,7 @@ import os
 import codecs
 import tensorflow as tf
 
-max_fold = 3
+max_iter = 3
 
 class F1Summary:
     def __init__(self, dir_summary):
@@ -122,18 +122,18 @@ class Entity_component(Component):
         train_batch, test_batch = create_batch(dataset=train_dataset,batch_size=batch_size), \
                                   create_batch(dataset=test_dataset ,batch_size=batch_size)
 
-        result_from_folds = {}
+        result_from_iters = {}
 
-        for fold_id in range(max_fold):
+        for iter_id in range(max_iter):
             """
-            reset model for each folds
+            reset model for each iters
             """
             self.model.reset_graph()
-            self.model.reset_dir_summary(dir_summary + '/fold_%i/loss' % fold_id)
-            f1_summary.reset(dir_summary + '/fold_%i/f1' % fold_id)
+            self.model.reset_dir_summary(dir_summary + '/iter_%i/loss' % iter_id)
+            f1_summary.reset(dir_summary + '/iter_%i/f1' % iter_id)
 
             print ('###########################')
-            print ('### start training, with fold %i' % fold_id)
+            print ('### start training, with iter %i' % iter_id)
             print ('# all variables of model must be reinitialized ...')
 
             nepochs, freq_eval = config['epochs'], config['freq_eval']
@@ -158,7 +158,7 @@ class Entity_component(Component):
                         init_lr *= lr_decay
                         print ('new lr: %f' % init_lr)
 
-                    #print('-- fold %i, epoch %i, batch %i has loss %f' % (fold_id, epoch, i, loss))
+                    #print('-- iter %i, epoch %i, batch %i has loss %f' % (iter_id, epoch, i, loss))
 
                     if train_i % freq_eval == 0:
                         """
@@ -216,14 +216,14 @@ class Entity_component(Component):
                             best_test = test_score['f1_total']
 
                             with open(test_score['path'], 'r') as f: best_result = f.read()
-                            result_from_folds['fold_%d' % fold_id] = best_result
+                            result_from_iters['iter_%d' % iter_id] = best_result
 
                             print(('-- New best score on test, ', str(best_test)))
 
         """
         close writer
         """
-        for k,v in result_from_folds.items():
+        for k,v in result_from_iters.items():
             path = os.path.join(config['saved_result_path'], "%s.txt" % k)
             with open(path,'w') as f: f.write(v)
 

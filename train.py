@@ -7,10 +7,10 @@ flags = tf.app.flags
 flags.DEFINE_string('word2vec_path','./Data/Word2vec/43k_word2vec.bin','path for storing word representation (.bin only)')
 flags.DEFINE_string('train_data_path','./Data/Train/fold_0/train.csv','path for training phase')
 flags.DEFINE_string('test_data_path','./Data/Train/fold_0/test.csv','path for testing phase')
-flags.DEFINE_integer('epochs',1,'number of epochs')
+flags.DEFINE_integer('epochs',30,'number of epochs')
 flags.DEFINE_integer('freq_eval',20,'number of batch passed to evaluate test set')
 flags.DEFINE_string('model_params_path','./model_params.json','model parameters path')
-flags.DEFINE_integer('batch_size',35,'number of samples per batch')
+flags.DEFINE_integer('batch_size',25,'number of samples per batch')
 flags.DEFINE_string('saved_result_path','./Results','folder for saving result')
 
 FLAGS = tf.app.flags.FLAGS
@@ -44,14 +44,11 @@ def build_config():
     config['model_params'] = json.load(open(FLAGS.model_params_path,'r'))
 
     assert os.path.isdir(FLAGS.saved_result_path)
-    config['saved_result_path'] = os.path.join(FLAGS.saved_result_path, str(datetime.datetime.now()).replace(' ','_') )
+    config['saved_result_path'] = FLAGS.saved_result_path #os.path.join(FLAGS.saved_result_path, str(datetime.datetime.now()).replace(' ','_') )
 
     """
     save some necessary materials in new folder.
     """
-    if os.path.isdir(config['saved_result_path']): shutil.rmtree(config['saved_result_path'])
-    os.mkdir(config['saved_result_path'])
-
     json.dump(config['model_params'], open(os.path.join(config['saved_result_path'],'model_params.json'),'w'))
 
     return config
@@ -59,6 +56,8 @@ def build_config():
 def main(_):
     registry = Registry()
     config = build_config()
+
+    print json.dumps(config, indent=2, sort_keys=True)
 
     components = registry.pipeline_to_components(pipeline)
     message = {}
