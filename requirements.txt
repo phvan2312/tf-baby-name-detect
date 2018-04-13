@@ -1,0 +1,6 @@
+tensorflow_gpu==1.4.1
+gensim==3.0.1
+numpy==1.11.0
+regex==2017.9.23
+pandas==0.19.2
+python_dateutil==2.7.2
