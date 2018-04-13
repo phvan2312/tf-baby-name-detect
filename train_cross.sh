@@ -1,6 +1,6 @@
 saved_result_dir='./Results/13042018'
 
-for i in {0..4}
+for (( i=0; i <= 4; ++i ))
 do
 	fold_i="fold_$i"
 
