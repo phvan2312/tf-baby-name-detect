@@ -1,7 +1,7 @@
 saved_result_dir='./Results/13042018'
 
 max=4
-for (( i=2; i <= $max; ++i ))
+for (( i=0; i <= $max; ++i ))
 do
     fold_i="fold_$i"
     echo "========================================================="
