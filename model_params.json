@@ -19,6 +19,6 @@
   "use_pos" : 0,
   "use_cap" : 0,
   "use_reg" : 0,
-  "use_batch_norm" : 0,
+  "use_batch_norm" : 1,
   "additional_layer" : "attention"
 }
