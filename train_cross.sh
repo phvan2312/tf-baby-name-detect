@@ -1,4 +1,4 @@
-saved_result_dir='./Results/19042018'
+saved_result_dir='./Results/18042018'
 
 i=0
 fold_i="fold_$i"
